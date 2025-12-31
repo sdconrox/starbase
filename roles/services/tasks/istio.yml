@@ -1,0 +1,39 @@
+- name: Deploy istio-vase
+  community.kubernetes.helm:
+    name: istio-base
+    release_namespace: istio-system
+    create_namespace: yes
+    chart_ref: manifests/charts/base
+    state: present
+    wait: yes
+    wait_timeout: 300s
+
+- name: Deploy istiod
+  community.kubernetes.helm:
+    name: istiod
+    release_namespace: istio-system
+    create_namespace: yes
+    chart_ref: manifests/charts/istio-control/istio-discovery
+    state: present
+    wait: yes
+    wait_timeout: 300s
+
+- name: Deploy istio-ingress
+  community.kubernetes.helm:
+    name: istio-ingress
+    release_namespace: istio-system
+    create_namespace: yes
+    chart_ref: anifests/charts/gateways/istio-ingress
+    state: present
+    wait: yes
+    wait_timeout: 300s
+
+- name: Deploy istio-egress
+  community.kubernetes.helm:
+    name: istio-egress
+    release_namespace: istio-system
+    create_namespace: yes
+    chart_ref: anifests/charts/gateways/istio-egress
+    state: present
+    wait: yes
+    wait_timeout: 300s

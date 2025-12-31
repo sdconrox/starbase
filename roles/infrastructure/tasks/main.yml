@@ -1,0 +1,59 @@
+- name: Ensure VPC exists via CloudFormation.
+  cloudformation:
+    stack_name: starbase-vpc
+    state: present
+    region: "{{ aws_region }}"
+    profile: "{{ aws_profile }}"
+    disable_rollback: false
+    template: vpc.yml
+    template_parameters:
+      Region: "{{ aws_region }}"
+    tags:
+      stack: starbase-vpc
+      application: starbase
+  register: vpc_info
+
+- name: Add to stack_outputs.
+  set_fact:
+    stack_outputs: "{{ stack_outputs | combine(vpc_info['stack_outputs']) }}"
+
+- name: Ensure EKS Cluster exists via CloudFormation.
+  cloudformation:
+    stack_name: starbase-cluster
+    state: present
+    region: "{{ aws_region }}"
+    profile: "{{ aws_profile }}"
+    disable_rollback: false
+    template: eks-cluster.yml
+    template_parameters:
+      ClusterName: "{{ eks_cluster_name }}"
+      KubernetesVersion: "{{ eks_kubernetes_version }}"
+      Subnets: "{{ stack_outputs.Subnets }}"
+      VpcId: "{{ stack_outputs.VpcId }}"
+    tags:
+      stack: starbase-cluster
+      application: starbase
+  register: eks_cluster_info
+
+- name: Add to stack_outputs.
+  set_fact:
+    stack_outputs: "{{ stack_outputs | combine(eks_cluster_info['stack_outputs']) }}"
+
+- name: Ensure EKS Node Group exists via CloudFormation.
+  cloudformation:
+    stack_name: starbase-nodegroup
+    state: present
+    region: "{{ aws_region }}"
+    profile: "{{ aws_profile }}"
+    disable_rollback: false
+    template: eks-nodegroup.yml
+    template_parameters:
+      ClusterName: "{{ eks_cluster_name }}"
+      NodeGroupName: "{{ eks_nodegroup_name }}"
+      NodeGroupDesiredCapacity: "{{ eks_nodegroup_cluster_size }}"
+      NodeInstanceType: "{{ eks_nodegroup_instance_type }}"
+      Subnets: "{{ stack_outputs.Subnets }}"
+    tags:
+      stack: starbase-nodegroup
+      application: starbase
+  register: eks_nodegroup_info

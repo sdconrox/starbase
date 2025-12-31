@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - common
+
+  tasks:
+    - name: Live long and prosper
+      debug:
+        msg: "Engage warp engines."
+
+    - name: Debug vars
+      debug:
+        var: eks_cluster_name
+
+    - name: Deploying identity and access management components
+      include_role:
+        name: iam
+
+#    - name: Deploying services
+#      include_role:
+#        name: services
+#        tasks_from: istio
+
+    - name: Deploying services
+      include_role:
+        name: services
