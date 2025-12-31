@@ -1,0 +1,42 @@
+# Credential scan results
+credential-scan-results/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# pyenv
+.python-version
+
+# Ansible
+.ansible/
+*.retry
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# Logs
+var/log/
+*.log
+
+# Secrets and sensitive files
+*.pem
+*.key
+*.p12
+*.pfx
+cluster_keys.json
+*secrets*.json
+*credentials*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
