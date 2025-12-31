@@ -2,7 +2,8 @@
 # Comprehensive credential scanner using multiple tools
 # Runs: gitleaks, truffleHog, git-secrets, and detect-secrets
 
-set -e
+# Don't exit on error - we want to run all tools even if some fail
+set +e
 
 # Colors for output
 RED='\033[0;31m'
@@ -49,17 +50,33 @@ print_header "1️⃣  Running gitleaks..."
 if command_exists gitleaks; then
     TOOLS_AVAILABLE=$((TOOLS_AVAILABLE + 1))
     echo -e "${GREEN}✓ gitleaks found${NC}"
+    echo "   Scanning filesystem (uncommitted files)..."
     OUTPUT_FILE="$RESULTS_DIR/gitleaks-results.json"
-    if gitleaks detect --source "$SCAN_DIR" --report-path "$OUTPUT_FILE" --verbose 2>&1 | tee "$RESULTS_DIR/gitleaks-output.txt"; then
-        TOOLS_RAN=$((TOOLS_RAN + 1))
-        if [ -s "$OUTPUT_FILE" ] && [ "$(cat "$OUTPUT_FILE" | jq 'length' 2>/dev/null || echo 0)" != "0" ]; then
-            echo -e "${RED}⚠️  gitleaks found potential secrets!${NC}"
+    # Use --no-git to scan filesystem instead of git commits
+    gitleaks detect --source "$SCAN_DIR" --no-git --report-path "$OUTPUT_FILE" --verbose 2>&1 | tee "$RESULTS_DIR/gitleaks-output.txt"
+    GITLEAKS_EXIT=$?
+    TOOLS_RAN=$((TOOLS_RAN + 1))
+
+    # Check if results file exists and has findings
+    if [ -s "$OUTPUT_FILE" ]; then
+        # Check if JSON has any findings (gitleaks outputs array of findings)
+        FINDING_COUNT=$(jq 'if type == "array" then length else 0 end' "$OUTPUT_FILE" 2>/dev/null || echo 0)
+        if [ "$FINDING_COUNT" -gt 0 ]; then
+            echo -e "${RED}⚠️  gitleaks found $FINDING_COUNT potential secret(s)!${NC}"
             echo "   Results saved to: $OUTPUT_FILE"
         else
             echo -e "${GREEN}✓ gitleaks: No secrets detected${NC}"
         fi
+    elif [ $GITLEAKS_EXIT -ne 0 ]; then
+        # gitleaks exits with non-zero when secrets found
+        if grep -q "leaks found" "$RESULTS_DIR/gitleaks-output.txt" 2>/dev/null; then
+            echo -e "${RED}⚠️  gitleaks found potential secrets!${NC}"
+            echo "   Check output: $RESULTS_DIR/gitleaks-output.txt"
+        else
+            echo -e "${GREEN}✓ gitleaks: No secrets detected${NC}"
+        fi
     else
-        echo -e "${YELLOW}⚠️  gitleaks scan completed with warnings${NC}"
+        echo -e "${GREEN}✓ gitleaks: No secrets detected${NC}"
     fi
 else
     echo -e "${YELLOW}⚠️  gitleaks not installed${NC}"
@@ -72,17 +89,30 @@ print_header "2️⃣  Running truffleHog..."
 if command_exists trufflehog; then
     TOOLS_AVAILABLE=$((TOOLS_AVAILABLE + 1))
     echo -e "${GREEN}✓ truffleHog found${NC}"
+    echo -e "${YELLOW}   Note: truffleHog v2.x only scans git commit history, not uncommitted files${NC}"
     OUTPUT_FILE="$RESULTS_DIR/trufflehog-results.json"
-    if trufflehog filesystem --directory "$SCAN_DIR" --json --output "$OUTPUT_FILE" 2>&1 | tee "$RESULTS_DIR/trufflehog-output.txt"; then
+    # Check if this is a git repo (truffleHog v2.x requires git repo)
+    if [ -d .git ]; then
+        # Use git repo path for older truffleHog versions (scans git history only)
+        trufflehog --json "$SCAN_DIR" > "$OUTPUT_FILE" 2>&1 | tee "$RESULTS_DIR/trufflehog-output.txt"
+        TRUFFLEHOG_EXIT=$?
         TOOLS_RAN=$((TOOLS_RAN + 1))
-        if [ -s "$OUTPUT_FILE" ] && [ "$(cat "$OUTPUT_FILE" | jq 'length' 2>/dev/null || echo 0)" != "0" ]; then
-            echo -e "${RED}⚠️  truffleHog found potential secrets!${NC}"
-            echo "   Results saved to: $OUTPUT_FILE"
+
+        # Check if results contain any findings (non-empty JSON array)
+        if [ -s "$OUTPUT_FILE" ]; then
+            # Check if it's valid JSON and has content
+            if jq -e '. | length > 0' "$OUTPUT_FILE" >/dev/null 2>&1; then
+                echo -e "${RED}⚠️  truffleHog found potential secrets in git history!${NC}"
+                echo "   Results saved to: $OUTPUT_FILE"
+            else
+                echo -e "${GREEN}✓ truffleHog: No secrets detected in git history${NC}"
+            fi
         else
-            echo -e "${GREEN}✓ truffleHog: No secrets detected${NC}"
+            echo -e "${GREEN}✓ truffleHog: No secrets detected in git history${NC}"
         fi
     else
-        echo -e "${YELLOW}⚠️  truffleHog scan completed with warnings${NC}"
+        echo -e "${YELLOW}⚠️  truffleHog requires a git repository. Skipping...${NC}"
+        echo "   (This directory is not a git repository)"
     fi
 else
     echo -e "${YELLOW}⚠️  truffleHog not installed${NC}"
@@ -95,28 +125,28 @@ print_header "3️⃣  Running git-secrets..."
 if command_exists git-secrets; then
     TOOLS_AVAILABLE=$((TOOLS_AVAILABLE + 1))
     echo -e "${GREEN}✓ git-secrets found${NC}"
+    echo "   Scanning filesystem (including untracked files)..."
     OUTPUT_FILE="$RESULTS_DIR/git-secrets-results.txt"
     # Initialize git-secrets if not already done
     if [ -d .git ]; then
         git secrets --install 2>/dev/null || true
+        # Register AWS patterns if not already registered
+        git secrets --register-aws 2>/dev/null || true
     fi
-    if git secrets --scan -r "$SCAN_DIR" 2>&1 | tee "$OUTPUT_FILE"; then
-        TOOLS_RAN=$((TOOLS_RAN + 1))
-        if [ -s "$OUTPUT_FILE" ] && grep -q "matches prohibited pattern" "$OUTPUT_FILE" 2>/dev/null; then
-            echo -e "${RED}⚠️  git-secrets found potential secrets!${NC}"
-            echo "   Results saved to: $OUTPUT_FILE"
-        else
-            echo -e "${GREEN}✓ git-secrets: No secrets detected${NC}"
-        fi
+    # Scan the current directory recursively, including untracked files and files not in git index
+    # --untracked: scan untracked files
+    # --no-index: scan files not managed by git
+    # -r: recursive
+    git secrets --scan -r --untracked --no-index . 2>&1 | tee "$OUTPUT_FILE"
+    SCAN_EXIT=$?
+    TOOLS_RAN=$((TOOLS_RAN + 1))
+
+    # Check output for matches (git-secrets exits with non-zero if secrets found)
+    if grep -q "matches prohibited pattern" "$OUTPUT_FILE" 2>/dev/null || [ $SCAN_EXIT -ne 0 ]; then
+        echo -e "${RED}⚠️  git-secrets found potential secrets!${NC}"
+        echo "   Results saved to: $OUTPUT_FILE"
     else
-        # git-secrets exits with non-zero if secrets found, so check output
-        if [ -s "$OUTPUT_FILE" ] && grep -q "matches prohibited pattern" "$OUTPUT_FILE" 2>/dev/null; then
-            echo -e "${RED}⚠️  git-secrets found potential secrets!${NC}"
-            echo "   Results saved to: $OUTPUT_FILE"
-        else
-            echo -e "${GREEN}✓ git-secrets: No secrets detected${NC}"
-        fi
-        TOOLS_RAN=$((TOOLS_RAN + 1))
+        echo -e "${GREEN}✓ git-secrets: No secrets detected${NC}"
     fi
 else
     echo -e "${YELLOW}⚠️  git-secrets not installed${NC}"
@@ -129,29 +159,41 @@ print_header "4️⃣  Running detect-secrets..."
 if command_exists detect-secrets; then
     TOOLS_AVAILABLE=$((TOOLS_AVAILABLE + 1))
     echo -e "${GREEN}✓ detect-secrets found${NC}"
+    echo "   Scanning all files (including uncommitted)..."
     BASELINE_FILE="$RESULTS_DIR/.secrets.baseline"
     OUTPUT_FILE="$RESULTS_DIR/detect-secrets-results.txt"
 
-    # Scan and create baseline
-    if detect-secrets scan "$SCAN_DIR" > "$BASELINE_FILE" 2>&1 | tee "$OUTPUT_FILE"; then
+    # Scan and create baseline - use --all-files to scan uncommitted files
+    # Redirect stderr to output file, stdout to baseline
+    detect-secrets scan --all-files . > "$BASELINE_FILE" 2>>"$OUTPUT_FILE"
+    SCAN_EXIT=$?
+
+    if [ -s "$BASELINE_FILE" ]; then
         TOOLS_RAN=$((TOOLS_RAN + 1))
-        # Audit the baseline
-        if detect-secrets audit "$BASELINE_FILE" 2>&1 | tee -a "$OUTPUT_FILE"; then
-            # Check if any secrets were found
-            if [ -s "$BASELINE_FILE" ] && grep -q '"results":\s*{' "$BASELINE_FILE" 2>/dev/null; then
-                SECRET_COUNT=$(cat "$BASELINE_FILE" | jq '.results | length' 2>/dev/null || echo 0)
-                if [ "$SECRET_COUNT" != "0" ] && [ "$SECRET_COUNT" != "null" ]; then
-                    echo -e "${RED}⚠️  detect-secrets found $SECRET_COUNT potential secret(s)!${NC}"
-                    echo "   Baseline saved to: $BASELINE_FILE"
-                else
-                    echo -e "${GREEN}✓ detect-secrets: No secrets detected${NC}"
-                fi
-            else
-                echo -e "${GREEN}✓ detect-secrets: No secrets detected${NC}"
-            fi
+        echo "Baseline created. Checking for secrets..." | tee -a "$OUTPUT_FILE"
+
+        # Check if baseline has any results
+        if jq -e '.results | length > 0' "$BASELINE_FILE" >/dev/null 2>&1; then
+            SECRET_COUNT=$(jq '.results | length' "$BASELINE_FILE" 2>/dev/null || echo 0)
+            echo -e "${RED}⚠️  detect-secrets found $SECRET_COUNT potential secret(s)!${NC}"
+            echo "   Baseline saved to: $BASELINE_FILE"
+            echo ""
+            echo "   To audit these findings, run:"
+            echo "   detect-secrets audit $BASELINE_FILE"
+
+            # Try to run audit if baseline has results
+            echo "" | tee -a "$OUTPUT_FILE"
+            echo "Running audit..." | tee -a "$OUTPUT_FILE"
+            detect-secrets audit "$BASELINE_FILE" 2>&1 | tee -a "$OUTPUT_FILE" || true
+        else
+            echo -e "${GREEN}✓ detect-secrets: No secrets detected${NC}"
         fi
     else
-        echo -e "${YELLOW}⚠️  detect-secrets scan completed with warnings${NC}"
+        echo -e "${YELLOW}⚠️  detect-secrets scan had issues${NC}"
+        if [ -s "$OUTPUT_FILE" ]; then
+            echo "   Check output: $OUTPUT_FILE"
+        fi
+        TOOLS_RAN=$((TOOLS_RAN + 1))
     fi
 else
     echo -e "${YELLOW}⚠️  detect-secrets not installed${NC}"
