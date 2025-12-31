@@ -1,2 +1,35 @@
-[localhost]
-127.0.0.1  ansible_connection=local
+[raspberry_pi_cluster]
+# Raspberry Pi 4 Kubernetes Cluster
+# Update IP addresses and hostnames to match your setup
+
+# Control plane node (master)
+pi-master ansible_host=192.168.1.10 ansible_user=pi
+
+# Worker nodes
+pi-worker-01 ansible_host=192.168.1.11 ansible_user=pi
+pi-worker-02 ansible_host=192.168.1.12 ansible_user=pi
+pi-worker-03 ansible_host=192.168.1.13 ansible_user=pi
+pi-worker-04 ansible_host=192.168.1.14 ansible_user=pi
+pi-worker-05 ansible_host=192.168.1.15 ansible_user=pi
+pi-worker-06 ansible_host=192.168.1.16 ansible_user=pi
+pi-worker-07 ansible_host=192.168.1.17 ansible_user=pi
+pi-worker-08 ansible_host=192.168.1.18 ansible_user=pi
+pi-worker-09 ansible_host=192.168.1.19 ansible_user=pi
+
+[control_plane]
+pi-master
+
+[workers]
+pi-worker-01
+pi-worker-02
+pi-worker-03
+pi-worker-04
+pi-worker-05
+pi-worker-06
+pi-worker-07
+pi-worker-08
+pi-worker-09
+
+[cluster:children]
+control_plane
+workers

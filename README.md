@@ -1,126 +1,192 @@
-# Starbase
+# Starbase - Kubernetes on Raspberry Pi
 
-An Ansible-based infrastructure automation project for deploying and managing an AWS EKS (Elastic Kubernetes Service) cluster.
+An Ansible-based automation project for deploying a Kubernetes cluster on 10 Raspberry Pi 4 devices using k3s (lightweight Kubernetes).
 
 ## Overview
 
-Starbase is an infrastructure-as-code project that automates the deployment of a Kubernetes cluster on AWS using EKS. The project uses Ansible playbooks to provision AWS infrastructure components including VPCs, EKS clusters, node groups, and IAM configurations.
+Starbase automates the deployment of a Kubernetes cluster across 10 Raspberry Pi 4 devices. The project uses Ansible playbooks to:
+- Configure system settings (disable swap, enable cgroups, configure networking)
+- Deploy k3s (lightweight Kubernetes distribution optimized for ARM)
+- Set up a 1 master + 9 worker node cluster
+- Configure kubectl access
 
 ## Project Structure
 
 ```
 starbase/
-├── playbooks/           # Ansible playbooks
-│   └── starbase.yml     # Main playbook for cluster deployment
-├── roles/               # Ansible roles
-│   ├── common/          # Common variables and settings
-│   ├── iam/             # IAM role and policy management
-│   ├── infrastructure/  # AWS infrastructure provisioning (VPC, EKS, node groups)
-│   └── services/        # Kubernetes service deployments (Vault, cert-manager, MySQL)
-├── bin/                 # Utility scripts
-│   └── aws-vpc-scan.sh  # AWS VPC resource scanning script
-├── lib/                 # Library files
-├── var/                 # Variable files and logs
-│   └── log/             # Ansible execution logs
-├── entertainment/       # Additional tasks and templates
-├── starbase.sh          # Main shell script with EKS setup commands
-├── starbase.py          # Python script for ansible-runner integration
-├── ansible.cfg          # Ansible configuration
-├── inventory            # Ansible inventory file
-├── cluster_keys.json    # Cluster key configuration
-├── ebs-csi-iam-policy.json  # EBS CSI driver IAM policy
-└── 20210804-aws-com_sdconrox-hosted_zone.json  # Route53 hosted zone configuration
+├── playbooks/                    # Ansible playbooks
+│   └── deploy-kubernetes.yml     # Main playbook for cluster deployment
+├── roles/                        # Ansible roles
+│   ├── common/                   # System configuration and prerequisites
+│   │   ├── tasks/
+│   │   └── vars/
+│   └── kubernetes/               # Kubernetes/k3s installation
+│       ├── tasks/
+│       ├── vars/
+│       └── templates/
+├── bin/                          # Utility scripts
+│   ├── install-credential-scanners.sh  # Install credential scanning tools
+│   └── scan-credentials.sh       # Scan for hardcoded secrets
+├── inventory                     # Ansible inventory (Raspberry Pi hosts)
+├── ansible.cfg                   # Ansible configuration
+└── README.md                     # This file
 ```
-
-## Key Components
-
-### Main Playbook (`playbooks/starbase.yml`)
-The primary playbook that orchestrates the deployment:
-- Executes common role for variable initialization
-- Deploys IAM components
-- Deploys services (currently includes commented-out Istio, Vault, cert-manager, and MySQL configurations)
-
-### Ansible Roles
-
-1. **common**: Defines common variables including:
-   - AWS region and profile settings
-   - EKS cluster configuration (name: `starbase`, Kubernetes version: 1.17)
-   - Node group settings (t3.medium instances, 3 nodes)
-   - WordPress and Route53 domain settings
-
-2. **iam**: Manages AWS Identity and Access Management components
-
-3. **infrastructure**: Provisions AWS infrastructure via CloudFormation:
-   - VPC creation
-   - EKS cluster deployment
-   - EKS node group creation
-
-4. **services**: Handles Kubernetes service deployments (currently commented out):
-   - HashiCorp Vault
-   - cert-manager
-   - MySQL (via Bitnami Helm charts)
-
-### Utility Scripts
-
-- **starbase.sh**: Shell script containing AWS EKS setup commands and documentation, including:
-  - EKS cluster configuration
-  - EBS CSI driver setup instructions
-  - kubeconfig creation commands
-
-- **bin/aws-vpc-scan.sh**: Script to scan and list AWS VPC resources including:
-  - Internet gateways
-  - Subnets
-  - Route tables
-  - Network ACLs
-  - Security groups
-  - NAT gateways
-  - VPN connections
-  - And other VPC-related resources
-
-### Configuration Files
-
-- **ansible.cfg**: Ansible configuration specifying:
-  - User: `sdconrox`
-  - Python interpreter: `/usr/bin/env python3`
-  - Inventory and playbook directories
-  - Roles path and log location
-
-- **inventory**: Ansible inventory file configured for localhost execution
-
-- **ebs-csi-iam-policy.json**: IAM policy for Amazon EBS CSI driver
-
-- **cluster_keys.json**: Cluster key configuration data
 
 ## Prerequisites
 
-- Ansible installed and configured
-- AWS CLI configured with appropriate credentials
+### Control Machine (where you run Ansible)
+- Ansible 2.9+ installed
 - Python 3
-- kubectl (for Kubernetes operations)
-- eksctl (for EKS cluster management)
-- Helm (for service deployments)
+- SSH access to all Raspberry Pi devices
+- SSH keys configured for passwordless access (recommended)
+
+### Raspberry Pi Devices
+- 10x Raspberry Pi 4 (4GB or 8GB recommended)
+- Raspberry Pi OS (64-bit recommended) or Ubuntu 22.04+ for ARM
+- Network connectivity between all devices
+- Static IP addresses configured (or update inventory with DHCP addresses)
+
+## Configuration
+
+### 1. Update Inventory
+
+Edit `inventory` file with your Raspberry Pi IP addresses and credentials:
+
+```ini
+[raspberry_pi_cluster]
+pi-master ansible_host=192.168.1.10 ansible_user=pi
+pi-worker-01 ansible_host=192.168.1.11 ansible_user=pi
+# ... update all IPs
+```
+
+### 2. Configure SSH Access
+
+Ensure you can SSH into all Raspberry Pi devices:
+
+```bash
+ssh pi@192.168.1.10  # Test master node
+```
+
+For passwordless access, copy your SSH key:
+
+```bash
+ssh-copy-id pi@192.168.1.10
+```
+
+### 3. Customize Variables (Optional)
+
+Edit `playbooks/deploy-kubernetes.yml` or role variables to customize:
+- Kubernetes version
+- Network CIDR ranges
+- k3s version
 
 ## Usage
 
-1. Configure AWS credentials and profile (`sdconrox_api` profile)
-2. Update variables in `roles/common/vars/main.yml` as needed
-3. Run the main playbook:
-   ```bash
-   ansible-playbook playbooks/starbase.yml
-   ```
+### Deploy Kubernetes Cluster
 
-## AWS Resources
+```bash
+ansible-playbook playbooks/deploy-kubernetes.yml
+```
 
-The project deploys the following AWS resources:
-- VPC with networking components
-- EKS cluster named `starbase`
-- EKS node group with 3 t3.medium instances
-- IAM roles and policies for cluster and node group operations
-- EBS CSI driver IAM policy for persistent volume support
+**Note:** If you're on an SMB/CIFS filesystem (network mount), run scripts with `bash` explicitly:
+```bash
+bash bin/scan-credentials.sh
+bash bin/install-credential-scanners.sh
+```
+
+### Verify Deployment
+
+After deployment, SSH into the master node and verify:
+
+```bash
+ssh pi@<master-ip>
+k3s kubectl get nodes
+k3s kubectl get pods --all-namespaces
+```
+
+### Access Cluster Remotely
+
+Copy the kubeconfig from the master node:
+
+```bash
+scp pi@<master-ip>:~/.kube/config ~/.kube/starbase-config
+export KUBECONFIG=~/.kube/starbase-config
+kubectl get nodes
+```
+
+## Credential Scanning
+
+The project includes tools to scan for hardcoded credentials and secrets:
+
+**Install scanning tools:**
+```bash
+bash bin/install-credential-scanners.sh
+```
+
+**Run credential scan:**
+```bash
+bash bin/scan-credentials.sh
+```
+
+## Architecture
+
+- **1 Master Node**: Runs k3s server, manages cluster state
+- **9 Worker Nodes**: Run k3s agents, execute workloads
+- **Network**: All nodes communicate over local network
+- **Storage**: Uses local storage (can be extended with external storage)
+
+## Customization
+
+### Using Full Kubernetes Instead of k3s
+
+Edit `playbooks/deploy-kubernetes.yml`:
+
+```yaml
+vars:
+  use_k3s: false
+```
+
+Note: Full Kubernetes is resource-intensive on Raspberry Pi. k3s is recommended.
+
+### Network Configuration
+
+Modify network CIDRs in `playbooks/deploy-kubernetes.yml`:
+
+```yaml
+vars:
+  cluster_cidr: "10.42.0.0/16"
+  service_cidr: "10.43.0.0/16"
+```
+
+## Troubleshooting
+
+### Nodes Not Joining
+
+1. Check network connectivity between nodes
+2. Verify firewall rules allow ports 6443, 10250
+3. Check k3s logs: `journalctl -u k3s -f` (master) or `journalctl -u k3s-agent -f` (workers)
+
+### Swap Issues
+
+If swap is still enabled, manually disable:
+```bash
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+```
+
+### cgroups Not Enabled
+
+On Raspberry Pi OS, ensure `/boot/cmdline.txt` contains:
+```
+cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1
+```
+
+Then reboot the device.
 
 ## Notes
 
-- The project uses CloudFormation templates (referenced in the infrastructure role) for resource provisioning
-- Some service deployments (Vault, cert-manager, MySQL) are currently commented out in the services role
-- The project is configured for the `us-east-1` AWS region
-- Kubernetes version 1.17 is specified (may need updating for current EKS support)
+- k3s is used by default as it's optimized for ARM and resource-constrained devices
+- The cluster uses local storage by default
+- All nodes should be on the same network segment
+- Ensure adequate power supply for all Raspberry Pi devices (official power adapters recommended)
+- For production use, consider adding external storage and backup solutions

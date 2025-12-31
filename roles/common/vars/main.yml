@@ -1,31 +1,29 @@
 ---
-ansible_python_interpreter: '{{ ansible_playbook_python }}'
+# Common variables for Raspberry Pi setup
 
-# AWS Settings.
-aws_environment: true
-aws_region: us-east-1
-aws_profile: sdconrox_api
+# System configuration
+timezone: "UTC"
+locale: "en_US.UTF-8"
 
-# This variable will be populated during playbook runs.
-stack_outputs: {}
+# User configuration
+ansible_user: pi
+ansible_become: yes
 
-# EKS Cluster settings.
-eks_cluster_name: starbase
-# See: https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html
-eks_kubernetes_version: "1.17"
+# System packages
+system_packages:
+  - curl
+  - wget
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - vim
+  - htop
+  - net-tools
 
-# Nodegroup settings.
-eks_nodegroup_name: starbase-nodegroup
-eks_nodegroup_instance_type: t3.medium
-eks_nodegroup_cluster_size: 3
+# Disable swap for Kubernetes
+disable_swap: true
 
-# WordPress settings.
-# wordpress_mysql_password: {redacted}
+# Enable cgroups (required for Kubernetes)
+enable_cgroups: true
 
-# Domain settings for Route53 DNS.
-wordpress_route53_zone: '' # e.g. 'example.com'
-wordpress_route53_domain: '' # e.g. 'wordpress.example.com'
-
-# Kubernetes settings.
-k8s_kubeconfig: ~/.kube/starbase
-k8s_no_log: true
