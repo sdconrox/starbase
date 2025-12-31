@@ -1,0 +1,9 @@
+---
+- name: Include k3s deployment tasks
+  include_tasks: k3s.yml
+  when: use_k3s | bool
+
+- name: Include full k8s deployment tasks
+  include_tasks: k8s.yml
+  when: not (use_k3s | bool)
+

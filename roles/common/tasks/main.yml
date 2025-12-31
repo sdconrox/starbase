@@ -1,0 +1,81 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install system packages
+  apt:
+    name: "{{ system_packages }}"
+    state: present
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Configure locale
+  locale_gen:
+    name: "{{ locale }}"
+    state: present
+
+- name: Disable swap (required for Kubernetes)
+  shell: |
+    swapoff -a
+    sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+  when: disable_swap | bool
+  changed_when: false
+
+- name: Enable cgroups
+  lineinfile:
+    path: /boot/cmdline.txt
+    regexp: '^.*cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1.*$'
+    line: '{{ ansible_facts["cmdline"] | default("") }} cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1'
+    backup: yes
+  when:
+    - enable_cgroups | bool
+    - ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
+  failed_when: false
+
+- name: Load required kernel modules
+  modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+  register: modprobe_result
+  changed_when: modprobe_result.changed
+
+- name: Configure sysctl for Kubernetes
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: yes
+    reload: yes
+  loop:
+    - { key: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+    - { key: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
+    - { key: 'net.ipv4.ip_forward', value: '1' }
+  when: modprobe_result.changed | bool
+
+- name: Ensure sysctl settings persist
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: "^{{ item.key | regex_escape() }}"
+    line: "{{ item.key }}={{ item.value }}"
+    state: present
+  loop:
+    - { key: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+    - { key: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
+    - { key: 'net.ipv4.ip_forward', value: '1' }
+
+- name: Reboot system if cgroups were enabled
+  reboot:
+    msg: "Rebooting to apply cgroup settings"
+    reboot_timeout: 300
+  when:
+    - enable_cgroups | bool
+    - ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
+    - modprobe_result.changed | bool
+

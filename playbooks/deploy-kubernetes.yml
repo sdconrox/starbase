@@ -1,0 +1,33 @@
+---
+- name: Deploy Kubernetes Cluster on Raspberry Pi 4s
+  hosts: raspberry_pi_cluster
+  become: yes
+  gather_facts: yes
+
+  vars:
+    # Kubernetes configuration
+    kubernetes_version: "1.28"
+    k3s_version: "latest"  # k3s is lightweight and works well on Raspberry Pi
+    use_k3s: true  # Set to false to use full k8s instead
+
+    # Network configuration
+    cluster_cidr: "10.42.0.0/16"
+    service_cidr: "10.43.0.0/16"
+
+    # Master node configuration
+    master_node: "pi-master"
+
+  pre_tasks:
+    - name: Set master IP fact
+      set_fact:
+        master_ip: "{{ hostvars[master_node]['ansible_host'] }}"
+
+  roles:
+    - role: common
+    - role: kubernetes
+
+  post_tasks:
+    - name: Display cluster information
+      debug:
+        msg: "Kubernetes cluster deployment complete. Master node: {{ master_node }} ({{ master_ip }})"
+

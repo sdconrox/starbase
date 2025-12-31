@@ -1,3 +1,0 @@
-- name: IAM
-  debug:
-    msg: IAM invoked

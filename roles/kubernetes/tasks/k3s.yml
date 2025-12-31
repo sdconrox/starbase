@@ -1,0 +1,109 @@
+---
+- name: Check if k3s is already installed
+  stat:
+    path: /usr/local/bin/k3s
+  register: k3s_installed
+
+# Master node setup
+- name: Install k3s on master node
+  shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} sh -s - \
+      --cluster-init \
+      --cluster-cidr {{ cluster_cidr }} \
+      --service-cidr {{ service_cidr }} \
+      --disable traefik
+  when:
+    - inventory_hostname in groups['control_plane']
+    - not k3s_installed.stat.exists
+  register: k3s_master_install
+
+- name: Wait for k3s master kubeconfig
+  wait_for:
+    path: /etc/rancher/k3s/k3s.yaml
+    state: present
+    timeout: 300
+  when:
+    - inventory_hostname in groups['control_plane']
+    - k3s_master_install.changed | bool
+
+- name: Wait for k3s token file on master
+  wait_for:
+    path: "{{ k3s_token_file }}"
+    state: present
+    timeout: 60
+  when:
+    - inventory_hostname in groups['control_plane']
+    - k3s_master_install.changed | bool
+
+# Worker node setup - ensure master is ready first
+- name: Get master node IP
+  set_fact:
+    master_ip: "{{ hostvars[master_node]['ansible_host'] }}"
+  when: inventory_hostname in groups['workers']
+
+- name: Get k3s token from master
+  slurp:
+    src: "{{ k3s_token_file }}"
+  register: k3s_token
+  delegate_to: "{{ master_node }}"
+  delegate_facts: yes
+  when: inventory_hostname in groups['workers']
+
+- name: Set k3s token fact
+  set_fact:
+    k3s_join_token: "{{ k3s_token.content | b64decode | trim }}"
+  when: inventory_hostname in groups['workers']
+
+- name: Install k3s on worker nodes
+  shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} K3S_URL=https://{{ master_ip }}:6443 K3S_TOKEN={{ k3s_join_token }} sh -
+  when:
+    - inventory_hostname in groups['workers']
+    - not k3s_installed.stat.exists
+  register: k3s_worker_install
+
+- name: Wait for k3s worker to be ready
+  wait_for:
+    port: 10250
+    host: "{{ ansible_host }}"
+    timeout: 300
+  when:
+    - inventory_hostname in groups['workers']
+    - k3s_worker_install.changed | bool
+
+- name: Create .kube directory for ansible user
+  file:
+    path: "~{{ ansible_user }}/.kube"
+    state: directory
+    mode: '0755'
+  when: inventory_hostname in groups['control_plane']
+
+- name: Copy kubeconfig to ansible user home
+  copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "~{{ ansible_user }}/.kube/config"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    mode: '0600'
+  when: inventory_hostname in groups['control_plane']
+
+- name: Update kubeconfig server address
+  replace:
+    path: "~{{ ansible_user }}/.kube/config"
+    regexp: 'https://127.0.0.1:6443'
+    replace: "https://{{ master_ip }}:6443"
+  when: inventory_hostname in groups['control_plane']
+
+- name: Verify cluster is ready
+  command: /usr/local/bin/k3s kubectl get nodes
+  register: cluster_status
+  changed_when: false
+  when: inventory_hostname in groups['control_plane']
+  retries: 10
+  delay: 10
+
+- name: Display cluster status
+  debug:
+    var: cluster_status.stdout_lines
+  when: inventory_hostname in groups['control_plane']
+

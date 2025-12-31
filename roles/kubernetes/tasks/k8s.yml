@@ -1,0 +1,9 @@
+---
+- name: Note about full Kubernetes
+  debug:
+    msg: "Full Kubernetes deployment on Raspberry Pi is resource-intensive. Consider using k3s instead (set use_k3s: true)."
+
+- name: TODO - Implement full k8s deployment
+  debug:
+    msg: "Full Kubernetes deployment tasks need to be implemented. For Raspberry Pi, k3s is recommended."
+
