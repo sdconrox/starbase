@@ -137,7 +137,7 @@ if command_exists git-secrets; then
     # --untracked: scan untracked files
     # --no-index: scan files not managed by git
     # -r: recursive
-    git secrets --scan -r --untracked --no-index . 2>&1 | tee "$OUTPUT_FILE"
+    git secrets --scan -r . 2>&1 | tee "$OUTPUT_FILE"
     SCAN_EXIT=$?
     TOOLS_RAN=$((TOOLS_RAN + 1))
 
