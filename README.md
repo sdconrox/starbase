@@ -22,7 +22,11 @@ starbase/
 │   ├── deploy-kubernetes.yml     # Main playbook for cluster deployment
 │   ├── setup-ansible-user.yml    # Create ansible user with permissions
 │   ├── setup-ssh-keys.yml        # Deploy SSH keys to existing users
-│   └── rollback-kubernetes.yml   # Rollback Kubernetes deployment
+│   ├── fetch-kubeconfig.yml      # Fetch kubeconfig to ~/.kube/config
+│   ├── upgrade-packages.yml       # Upgrade packages on all hosts
+│   ├── audit-system.yml          # System audit and compliance check
+│   ├── rollback-kubernetes.yml   # Rollback Kubernetes deployment
+│   └── test-connection-summary.yml  # Connection test summary
 ├── roles/                        # Ansible roles
 │   ├── common/                   # System configuration and prerequisites
 │   │   ├── tasks/
@@ -31,6 +35,10 @@ starbase/
 │       ├── tasks/
 │       ├── vars/
 │       └── templates/
+├── kubernetes-dashboard/         # Kubernetes Dashboard deployment
+│   ├── deploy-dashboard.yml      # Deploy Kubernetes Dashboard (idempotent)
+│   ├── access-dashboard.sh       # Access script with port-forwarding
+│   └── README.md                  # Dashboard deployment guide
 ├── proxmox/                      # Proxmox setup documentation
 │   ├── README.md                 # Guide for creating cloud-init template
 │   └── generate-ssh-key.sh      # SSH key generation utility
@@ -46,6 +54,7 @@ starbase/
 │   └── update-inventory-from-terraform.sh  # Sync Terraform output to inventory
 ├── inventory                     # Ansible inventory (VM master + Raspberry Pi workers)
 ├── ansible.cfg                   # Ansible configuration (default user: ansible)
+├── ROLLBACK.md                   # Rollback procedures and documentation
 └── README.md                     # This file
 ```
 
@@ -190,9 +199,9 @@ ssh ansible@<worker-ip>
 ### Step 5: Customize Variables (Optional)
 
 Edit `playbooks/deploy-kubernetes.yml` or role variables to customize:
-- Kubernetes version
+- Kubernetes version (default: 1.34)
 - Network CIDR ranges
-- k3s version
+- k3s version (default: v1.34.3+k3s1 - latest stable)
 
 Or edit Terraform variables in `terraform/terraform.tfvars`:
 - VM resources (CPU, memory, disk)
@@ -229,13 +238,73 @@ k3s kubectl get pods --all-namespaces
 
 ### Access Cluster Remotely
 
-Copy the kubeconfig from the master node:
+After deployment, fetch the kubeconfig to your local machine:
 
 ```bash
-scp ansible@<master-ip>:~/.kube/config ~/.kube/starbase-config
-export KUBECONFIG=~/.kube/starbase-config
-kubectl get nodes
+ansible-playbook playbooks/fetch-kubeconfig.yml
 ```
+
+This playbook will:
+- Fetch the kubeconfig from the master node
+- Save it to `~/.kube/config` (kubectl's default location)
+- Update the server address from `127.0.0.1` to the master IP
+- Display access instructions
+
+After running this, you can use `kubectl` directly without setting `KUBECONFIG`:
+
+```bash
+kubectl get nodes
+kubectl get pods --all-namespaces
+```
+
+## Additional Playbooks
+
+### Fetch Kubeconfig
+
+Fetch the kubeconfig from the cluster and save it to `~/.kube/config`:
+
+```bash
+ansible-playbook playbooks/fetch-kubeconfig.yml
+```
+
+This makes `kubectl` work automatically without setting `KUBECONFIG`.
+
+### Upgrade Packages
+
+Upgrade all packages on all hosts:
+
+```bash
+ansible-playbook playbooks/upgrade-packages.yml
+```
+
+### Audit System
+
+Run a comprehensive system audit to check compliance and readiness:
+
+```bash
+ansible-playbook playbooks/audit-system.yml
+```
+
+This checks:
+- Package upgrade status
+- User login history
+- User existence (ensures only `ansible` and `sdconrox` exist)
+- System resource capacity
+- Kubernetes-specific settings (swap, sysctl, cgroups, kernel modules)
+- Network interfaces
+- SSH key and sudo configuration
+
+### Deploy Kubernetes Dashboard
+
+Deploy the official Kubernetes Dashboard:
+
+```bash
+cd kubernetes-dashboard
+ansible-playbook deploy-dashboard.yml
+./access-dashboard.sh
+```
+
+See `kubernetes-dashboard/README.md` for detailed instructions.
 
 ## Credential Scanning
 
@@ -316,6 +385,12 @@ cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1
 
 Then reboot the device.
 
+## Current Versions
+
+- **k3s**: v1.34.3+k3s1 (latest stable as of 2024)
+- **Kubernetes**: 1.34.3
+- **Dashboard**: v2.7.0 (when deployed)
+
 ## Notes
 
 - **k3s** is used by default as it's optimized for ARM and resource-constrained devices
@@ -325,6 +400,8 @@ Then reboot the device.
 - Ensure adequate power supply for all Raspberry Pi devices (official power adapters recommended)
 - The master VM is managed via Terraform - use `terraform destroy` to remove it
 - For production use, consider adding external storage and backup solutions
+- Kubeconfig is **not** automatically fetched during deployment - run `playbooks/fetch-kubeconfig.yml` separately
+- All playbooks are idempotent and can be run multiple times safely
 
 ## Setup Components
 
@@ -354,8 +431,22 @@ The master node VM is created and managed via Terraform. Key files:
 Ansible handles the Kubernetes cluster deployment. Key files:
 
 - `playbooks/deploy-kubernetes.yml`: Main deployment playbook
+- `playbooks/fetch-kubeconfig.yml`: Fetch kubeconfig to local machine
+- `playbooks/upgrade-packages.yml`: Upgrade packages on all hosts
+- `playbooks/audit-system.yml`: System audit and compliance check
+- `playbooks/rollback-kubernetes.yml`: Rollback Kubernetes deployment
 - `roles/common/`: System configuration role
 - `roles/kubernetes/`: Kubernetes/k3s installation role
 - `inventory`: Host inventory (updated by Terraform script)
 
 **Purpose:** Configure all nodes and deploy Kubernetes (k3s) across the cluster.
+
+### Kubernetes Dashboard
+
+A standalone deployment for the Kubernetes Dashboard is available in `kubernetes-dashboard/`:
+
+- `deploy-dashboard.yml`: Idempotent Ansible playbook to deploy the dashboard
+- `access-dashboard.sh`: Script to access the dashboard with port-forwarding
+- `README.md`: Detailed deployment and access instructions
+
+**Purpose:** Deploy and access the official Kubernetes web UI for cluster management.
