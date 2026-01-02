@@ -9,6 +9,20 @@
     name: "{{ system_packages }}"
     state: present
 
+- name: Install qemu-guest-agent on Proxmox VMs
+  apt:
+    name: qemu-guest-agent
+    state: present
+  when: inventory_hostname in groups['proxmox']
+  # Only install on Proxmox VMs, not on Raspberry Pi workers
+
+- name: Enable and start qemu-guest-agent service
+  systemd:
+    name: qemu-guest-agent
+    enabled: yes
+    state: started
+  when: inventory_hostname in groups['proxmox']
+
 - name: Set timezone
   timezone:
     name: "{{ timezone }}"
@@ -18,12 +32,27 @@
     name: "{{ locale }}"
     state: present
 
+- name: Check if swap is already disabled in fstab
+  shell: |
+    if [ -f /etc/fstab ]; then
+      ! grep -q "^[^#].* swap " /etc/fstab
+    else
+      true
+    fi
+  register: swap_already_disabled
+  changed_when: false
+  failed_when: false
+  when: disable_swap | bool
+
 - name: Disable swap (required for Kubernetes)
   shell: |
-    swapoff -a
+    swapoff -a || true
     sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
-  when: disable_swap | bool
-  changed_when: false
+  when:
+    - disable_swap | bool
+    - not swap_already_disabled.rc == 0
+  # Note: This works on both x86_64 (Proxmox VM) and ARM (Raspberry Pi)
+  # swapoff may fail if no swap is configured, which is fine
 
 - name: Enable cgroups
   lineinfile:
@@ -35,6 +64,7 @@
     - enable_cgroups | bool
     - ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
   failed_when: false
+  register: cgroups_config
 
 - name: Load required kernel modules
   modprobe:
@@ -57,7 +87,7 @@
     - { key: 'net.bridge.bridge-nf-call-iptables', value: '1' }
     - { key: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
     - { key: 'net.ipv4.ip_forward', value: '1' }
-  when: modprobe_result.changed | bool
+  # Always configure sysctl - required for Kubernetes on all nodes
 
 - name: Ensure sysctl settings persist
   lineinfile:
@@ -70,12 +100,14 @@
     - { key: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
     - { key: 'net.ipv4.ip_forward', value: '1' }
 
-- name: Reboot system if cgroups were enabled
+- name: Reboot system if cgroups were enabled on ARM
   reboot:
-    msg: "Rebooting to apply cgroup settings"
+    msg: "Rebooting to apply cgroup settings (required for Kubernetes on ARM)"
     reboot_timeout: 300
   when:
     - enable_cgroups | bool
     - ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
-    - modprobe_result.changed | bool
+    - cgroups_config.changed | default(false) | bool
+  # Only reboot if we actually modified cmdline.txt (cgroups configuration)
+  # This prevents unnecessary reboots on x86_64 master node (which doesn't have /boot/cmdline.txt)
 

@@ -1,34 +1,41 @@
 [raspberry_pi_cluster]
-# Raspberry Pi 4 Kubernetes Cluster
+# Kubernetes Cluster: VM Master + Raspberry Pi Workers
 # Update IP addresses and hostnames to match your setup
 
-# Control plane node (master)
-pi-master ansible_host=192.168.1.10 ansible_user=pi
+# Control plane node (master) - Proxmox VM
+# This will be populated automatically by Terraform
+# Run: bash bin/update-inventory-from-terraform.sh after terraform apply
+k8s-master ansible_host=10.60.0.198
 
-# Worker nodes
-pi-worker-01 ansible_host=192.168.1.11 ansible_user=pi
-pi-worker-02 ansible_host=192.168.1.12 ansible_user=pi
-pi-worker-03 ansible_host=192.168.1.13 ansible_user=pi
-pi-worker-04 ansible_host=192.168.1.14 ansible_user=pi
-pi-worker-05 ansible_host=192.168.1.15 ansible_user=pi
-pi-worker-06 ansible_host=192.168.1.16 ansible_user=pi
-pi-worker-07 ansible_host=192.168.1.17 ansible_user=pi
-pi-worker-08 ansible_host=192.168.1.18 ansible_user=pi
-pi-worker-09 ansible_host=192.168.1.19 ansible_user=pi
+# Worker nodes (Raspberry Pi 4)
+servitor-i      ansible_host=10.60.0.78
+servitor-ii     ansible_host=10.60.0.92
+servitor-iii    ansible_host=10.60.0.24
+servitor-iv     ansible_host=10.60.0.74
+servitor-ix     ansible_host=10.60.0.153
+servitor-v      ansible_host=10.60.0.15
+servitor-vi     ansible_host=10.60.0.60
+servitor-vii    ansible_host=10.60.0.51
+servitor-viii   ansible_host=10.60.0.150
+servitor-x      ansible_host=10.60.0.231
+
+[proxmox]
+k8s-master
 
 [control_plane]
-pi-master
+k8s-master
 
 [workers]
-pi-worker-01
-pi-worker-02
-pi-worker-03
-pi-worker-04
-pi-worker-05
-pi-worker-06
-pi-worker-07
-pi-worker-08
-pi-worker-09
+servitor-i
+servitor-ii
+servitor-iii
+servitor-iv
+servitor-ix
+servitor-v
+servitor-vi
+servitor-vii
+servitor-viii
+servitor-x
 
 [cluster:children]
 control_plane

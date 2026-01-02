@@ -1,0 +1,42 @@
+---
+- name: Deploy SSH keys to all cluster nodes
+  hosts: raspberry_pi_cluster
+  remote_user: sdconrox
+  become: yes
+  vars:
+    ssh_key_path: /Volumes/sdx-share-0/sdconrox/.sdx/.crypt/ssh/starbase_ansible.pub
+
+  tasks:
+    - name: Ensure .ssh directory exists
+      file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.ssh"
+        state: directory
+        mode: '0700'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Read Ansible public key
+      slurp:
+        src: "{{ ssh_key_path }}"
+      register: ssh_public_key
+      delegate_to: localhost
+      become: no # Don't use sudo when reading local file
+      run_once: true
+
+    - name: Add Ansible public key to authorized_keys
+      authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ ssh_public_key.content | b64decode | trim }}"
+        exclusive: no  # Don't remove other keys
+
+    - name: Set correct permissions on authorized_keys
+      file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.ssh/authorized_keys"
+        mode: '0600'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Display key deployment status
+      debug:
+        msg: "SSH key deployed to {{ inventory_hostname }} ({{ ansible_user }})"

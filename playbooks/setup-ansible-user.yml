@@ -1,0 +1,90 @@
+---
+- name: Create ansible user with full Kubernetes deployment permissions
+  hosts: raspberry_pi_cluster
+  remote_user: sdconrox
+  become: yes
+  vars:
+    ansible_username: ansible
+    ssh_key_path: /Volumes/sdx-share-0/sdconrox/.sdx/.crypt/ssh/starbase_ansible.pub
+
+  tasks:
+    - name: Create ansible user with sudo group
+      user:
+        name: "{{ ansible_username }}"
+        state: present
+        shell: /bin/bash
+        create_home: yes
+        home: "/home/{{ ansible_username }}"
+        groups: sudo
+        append: yes
+        system: no
+      register: user_creation
+
+    - name: Read Ansible public key
+      slurp:
+        src: "{{ ssh_key_path }}"
+      register: ssh_public_key
+      delegate_to: localhost
+      become: no
+      run_once: true
+
+    - name: Ensure .ssh directory exists for ansible user
+      file:
+        path: "/home/{{ ansible_username }}/.ssh"
+        state: directory
+        mode: '0700'
+        owner: "{{ ansible_username }}"
+        group: "{{ ansible_username }}"
+
+    - name: Add SSH public key to ansible user authorized_keys
+      authorized_key:
+        user: "{{ ansible_username }}"
+        state: present
+        key: "{{ ssh_public_key.content | b64decode | trim }}"
+        exclusive: no
+
+    - name: Set correct permissions on authorized_keys
+      file:
+        path: "/home/{{ ansible_username }}/.ssh/authorized_keys"
+        mode: '0600'
+        owner: "{{ ansible_username }}"
+        group: "{{ ansible_username }}"
+
+    - name: Configure passwordless sudo for ansible user
+      lineinfile:
+        path: /etc/sudoers.d/ansible
+        line: "{{ ansible_username }} ALL=(ALL) NOPASSWD: ALL"
+        state: present
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+        backup: yes
+
+    - name: Ensure sudoers.d directory has correct permissions
+      file:
+        path: /etc/sudoers.d
+        state: directory
+        mode: '0755'
+
+    - name: Verify sudoers configuration file exists
+      stat:
+        path: /etc/sudoers.d/ansible
+      register: sudoers_file
+
+    - name: Verify sudoers file content
+      shell: 'grep -q "{{ ansible_username }} ALL=(ALL) NOPASSWD: ALL" /etc/sudoers.d/ansible'
+      register: sudoers_content_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display setup summary
+      debug:
+        msg:
+          - "✓ Ansible user '{{ ansible_username }}' configured on {{ inventory_hostname }}"
+          - "  - User created: {{ 'Yes' if user_creation.changed else 'Already existed' }}"
+          - "  - SSH key deployed: Yes"
+          - "  - Passwordless sudo configured: {{ 'Yes' if sudoers_file.stat.exists and sudoers_content_check.rc == 0 else 'No' }}"
+          - ""
+          - "You can now use this user for deployments:"
+          - "  ansible-playbook -u {{ ansible_username }} playbooks/deploy-kubernetes.yml"
+

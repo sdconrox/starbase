@@ -1,0 +1,346 @@
+---
+- name: System Audit and Compliance Check
+  hosts: all
+  gather_facts: yes
+  become: yes
+  remote_user: ansible
+
+  vars:
+    allowed_users:
+      - ansible
+      - sdconrox
+      - root  # System user, always exists
+      - daemon
+      - bin
+      - sys
+      - sync
+      - games
+      - man
+      - lp
+      - mail
+      - news
+      - uucp
+      - proxy
+      - www-data
+      - backup
+      - list
+      - irc
+      - gnats
+      - nobody
+      - _apt
+      - systemd-timesync
+      - systemd-network
+      - systemd-resolve
+      - messagebus
+      - systemd-coredump
+      - sshd
+      - pollinate
+      - qemu  # For Proxmox VMs
+
+  tasks:
+    - name: Test connectivity with ping
+      ansible.builtin.ping:
+
+    - name: Display audit header
+      ansible.builtin.debug:
+        msg:
+          - "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          - "System Audit: {{ inventory_hostname }}"
+          - "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    # System Information
+    - name: Gather basic system information
+      ansible.builtin.set_fact:
+        system_info:
+          hostname: "{{ ansible_hostname }}"
+          ip: "{{ ansible_default_ipv4.address | default('N/A') }}"
+          os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+          kernel: "{{ ansible_kernel }}"
+          arch: "{{ ansible_architecture }}"
+          uptime_hours: "{{ (ansible_uptime_seconds | default(0) | int) // 3600 }}"
+
+    - name: Display system information
+      ansible.builtin.debug:
+        msg:
+          - "System Information:"
+          - "  Hostname: {{ system_info.hostname }}"
+          - "  IP Address: {{ system_info.ip }}"
+          - "  OS: {{ system_info.os }}"
+          - "  Kernel: {{ system_info.kernel }}"
+          - "  Architecture: {{ system_info.arch }}"
+          - "  Uptime: {{ system_info.uptime_hours }} hours"
+
+    # Package Upgrade Audit
+    - name: Check last package upgrade time
+      ansible.builtin.stat:
+        path: /var/log/apt/history.log
+      register: apt_history
+
+    - name: Get last package upgrade date from apt history
+      ansible.builtin.shell: |
+        if [ -f /var/log/apt/history.log ]; then
+          grep -E "^Start-Date:" /var/log/apt/history.log | tail -1 | sed 's/Start-Date: //'
+        else
+          echo "N/A - No apt history log found"
+        fi
+      register: last_upgrade_date
+      changed_when: false
+      failed_when: false
+
+    - name: Get last package upgrade details
+      ansible.builtin.shell: |
+        if [ -f /var/log/apt/history.log ]; then
+          grep -A 5 "^Start-Date:" /var/log/apt/history.log | tail -6 | head -6
+        else
+          echo "No apt history available"
+        fi
+      register: last_upgrade_details
+      changed_when: false
+      failed_when: false
+
+    - name: Display package upgrade audit
+      ansible.builtin.debug:
+        msg:
+          - "Package Upgrade Audit:"
+          - "  Last upgrade: {{ last_upgrade_date.stdout }}"
+          - "  Details:"
+          - "{{ last_upgrade_details.stdout_lines | default(['N/A']) | join('\n    ') }}"
+
+    # User Login Audit
+    - name: Get last login information
+      ansible.builtin.shell: |
+        last -n 5 | head -6
+      register: last_logins
+      changed_when: false
+      failed_when: false
+
+    - name: Get last user login details
+      ansible.builtin.shell: |
+        lastlog -u ansible -u sdconrox 2>/dev/null || echo "No login records found"
+      register: user_last_logins
+      changed_when: false
+      failed_when: false
+
+    - name: Display login audit
+      ansible.builtin.debug:
+        msg:
+          - "Login Audit:"
+          - "  Recent logins:"
+          - "{{ last_logins.stdout_lines | default(['N/A']) | join('\n    ') }}"
+          - "  User login history:"
+          - "{{ user_last_logins.stdout_lines | default(['N/A']) | join('\n    ') }}"
+
+    # User Existence Audit
+    - name: Check if ansible user exists
+      ansible.builtin.getent:
+        database: passwd
+        key: ansible
+      register: ansible_user_check
+      failed_when: false
+
+    - name: Check if sdconrox user exists
+      ansible.builtin.getent:
+        database: passwd
+        key: sdconrox
+      register: sdconrox_user_check
+      failed_when: false
+
+    - name: Get all non-system users
+      ansible.builtin.shell: |
+        getent passwd | awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}'
+      register: all_users
+      changed_when: false
+
+    - name: Check for unauthorized users
+      ansible.builtin.set_fact:
+        unauthorized_users: "{{ all_users.stdout_lines | reject('in', allowed_users) | reject('equalto', '') | list }}"
+      when: all_users.stdout_lines is defined
+
+    - name: Display user audit
+      ansible.builtin.debug:
+        msg:
+          - "User Audit:"
+          - "  ansible user exists: {{ 'Yes' if ansible_user_check.ansible_facts.getent_passwd.ansible is defined else 'No' }}"
+          - "  sdconrox user exists: {{ 'Yes' if sdconrox_user_check.ansible_facts.getent_passwd.sdconrox is defined else 'No' }}"
+          - "  All non-system users: {{ all_users.stdout_lines | default([]) | join(', ') }}"
+          - "  Unauthorized users: {{ 'None' if (unauthorized_users | default([]) | length == 0) else (unauthorized_users | join(', ')) }}"
+
+    - name: Fail if ansible user does not exist
+      ansible.builtin.fail:
+        msg: "CRITICAL: ansible user does not exist on {{ inventory_hostname }}"
+      when: ansible_user_check.ansible_facts.getent_passwd.ansible is not defined
+
+    - name: Warn about unauthorized users
+      ansible.builtin.debug:
+        msg: "WARNING: Unauthorized users found on {{ inventory_hostname }}: {{ unauthorized_users | join(', ') }}"
+      when:
+        - unauthorized_users is defined
+        - unauthorized_users | length > 0
+
+    # Resource Capacity Audit
+    - name: Get disk usage
+      ansible.builtin.command: df -h
+      register: disk_usage
+      changed_when: false
+
+    - name: Get memory information
+      ansible.builtin.command: free -h
+      register: memory_info
+      changed_when: false
+
+    - name: Get CPU information
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - '!any'
+        filter: ansible_processor*
+
+    - name: Calculate disk usage percentage
+      ansible.builtin.set_fact:
+        root_disk_usage: "{{ (disk_usage.stdout_lines[1] | default('') | regex_search('(\\d+)%') | default(['0%']) | first) | regex_replace('%', '') | int }}"
+      when: disk_usage.stdout_lines | length > 1
+
+    - name: Display resource capacity audit
+      ansible.builtin.debug:
+        msg:
+          - "Resource Capacity Audit:"
+          - "  Disk Usage:"
+          - "{{ disk_usage.stdout_lines | default([]) | join('\n    ') }}"
+          - "  Memory:"
+          - "{{ memory_info.stdout_lines | default([]) | join('\n    ') }}"
+          - "  CPU: {{ ansible_processor_vcpus | default('N/A') }} vCPU(s)"
+          - "  Architecture: {{ ansible_architecture }}"
+
+    - name: Warn if disk usage is high
+      ansible.builtin.debug:
+        msg: "WARNING: Root filesystem usage is {{ root_disk_usage }}% on {{ inventory_hostname }}"
+      when:
+        - root_disk_usage is defined
+        - root_disk_usage | int > 80
+
+    # Kubernetes Settings Audit
+    - name: Check if swap is disabled
+      ansible.builtin.shell: |
+        if [ -f /etc/fstab ]; then
+          ! grep -q "^[^#].* swap " /etc/fstab
+        else
+          true
+        fi
+      register: swap_disabled_check
+      changed_when: false
+      failed_when: false
+
+    - name: Check current swap status
+      ansible.builtin.command: swapon --show
+      register: swap_status
+      changed_when: false
+      failed_when: false
+
+    - name: Check sysctl Kubernetes settings
+      ansible.builtin.shell: |
+        sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward 2>/dev/null || echo "N/A"
+      register: sysctl_settings
+      changed_when: false
+      failed_when: false
+
+    - name: Check if sysctl settings persist in /etc/sysctl.conf
+      ansible.builtin.shell: |
+        grep -E "net.bridge.bridge-nf-call-iptables|net.bridge.bridge-nf-call-ip6tables|net.ipv4.ip_forward" /etc/sysctl.conf 2>/dev/null || echo "Not found"
+      register: sysctl_persist
+      changed_when: false
+      failed_when: false
+
+    - name: Check cgroups configuration (ARM only)
+      ansible.builtin.shell: |
+        if [ -f /boot/cmdline.txt ]; then
+          grep -q "cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1" /boot/cmdline.txt && echo "Configured" || echo "Not configured"
+        else
+          echo "N/A (x86_64 system)"
+        fi
+      register: cgroups_check
+      changed_when: false
+      failed_when: false
+      when: ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
+
+    - name: Check required kernel modules
+      ansible.builtin.shell: |
+        lsmod | grep -E "overlay|br_netfilter" | awk '{print $1}' || echo "Not loaded"
+      register: kernel_modules
+      changed_when: false
+      failed_when: false
+
+    - name: Display Kubernetes settings audit
+      ansible.builtin.debug:
+        msg:
+          - "Kubernetes Settings Audit:"
+          - "  Swap disabled in fstab: {{ 'Yes' if swap_disabled_check.rc == 0 else 'No' }}"
+          - "  Current swap status: {{ 'Active' if swap_status.stdout_lines | length > 0 else 'Inactive' }}"
+          - "  Sysctl settings:"
+          - "{{ sysctl_settings.stdout_lines | default([]) | join('\n    ') }}"
+          - "  Sysctl persistence: {{ 'Yes' if 'Not found' not in sysctl_persist.stdout else 'No' }}"
+          - "  Cgroups configured (ARM): {{ cgroups_check.stdout | default('N/A') }}"
+          - "  Kernel modules loaded: {{ kernel_modules.stdout }}"
+
+    - name: Fail if swap is not disabled
+      ansible.builtin.fail:
+        msg: "CRITICAL: Swap is not disabled on {{ inventory_hostname }} (required for Kubernetes)"
+      when: swap_disabled_check.rc != 0
+
+    - name: Warn if sysctl settings are missing
+      ansible.builtin.debug:
+        msg: "WARNING: Kubernetes sysctl settings may not be configured on {{ inventory_hostname }}"
+      when: "'Not found' in sysctl_persist.stdout"
+
+    - name: Warn if cgroups not configured on ARM
+      ansible.builtin.debug:
+        msg: "WARNING: Cgroups not configured on {{ inventory_hostname }} (required for Kubernetes on ARM)"
+      when:
+        - (ansible_architecture == "armv7l" or ansible_architecture == "aarch64")
+        - "'Not configured' in cgroups_check.stdout"
+
+    # Network Audit
+    - name: Get network interfaces
+      ansible.builtin.command: ip -4 addr show
+      register: network_interfaces
+      changed_when: false
+      failed_when: false
+
+    - name: Display network audit
+      ansible.builtin.debug:
+        msg:
+          - "Network Audit:"
+          - "{{ network_interfaces.stdout | default('N/A') }}"
+
+    # Security Audit
+    - name: Check SSH key configuration for ansible user
+      ansible.builtin.stat:
+        path: /home/ansible/.ssh/authorized_keys
+      register: ansible_ssh_key
+      failed_when: false
+
+    - name: Check sudo configuration for ansible user
+      ansible.builtin.shell: |
+        if [ -f /etc/sudoers.d/ansible ]; then
+          grep -q "ansible.*NOPASSWD.*ALL" /etc/sudoers.d/ansible && echo "Configured" || echo "Not configured"
+        else
+          echo "File not found"
+        fi
+      register: ansible_sudo_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display security audit
+      ansible.builtin.debug:
+        msg:
+          - "Security Audit:"
+          - "  ansible user SSH key: {{ 'Configured' if ansible_ssh_key.stat.exists else 'Not found' }}"
+          - "  ansible user sudo: {{ ansible_sudo_check.stdout }}"
+
+    # Summary
+    - name: Display audit summary
+      ansible.builtin.debug:
+        msg:
+          - "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          - "Audit Complete: {{ inventory_hostname }}"
+          - "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+

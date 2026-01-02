@@ -1,0 +1,40 @@
+---
+- name: Test Connection and Gather Summary Information
+  hosts: all
+  gather_facts: yes
+  become: no
+  remote_user: ansible
+
+  tasks:
+    - name: Test connectivity
+      ansible.builtin.ping:
+
+    - name: Collect host summary
+      ansible.builtin.set_fact:
+        host_summary:
+          hostname: "{{ ansible_hostname }}"
+          ip: "{{ ansible_default_ipv4.address | default('N/A') }}"
+          os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+          arch: "{{ ansible_architecture }}"
+          kernel: "{{ ansible_kernel }}"
+          python: "{{ ansible_python_version }}"
+          python_path: "{{ ansible_python.executable | default('N/A') }}"
+          user: "{{ ansible_user | default('N/A') }}"
+          groups: "{{ group_names | join(', ') }}"
+
+  post_tasks:
+    - name: Display connection summary
+      ansible.builtin.debug:
+        msg:
+          - "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          - "Host: {{ inventory_hostname }}"
+          - "  IP: {{ host_summary.ip }}"
+          - "  OS: {{ host_summary.os }} ({{ host_summary.arch }})"
+          - "  Kernel: {{ host_summary.kernel }}"
+          - "  Python: {{ host_summary.python }} ({{ host_summary.python_path }})"
+          - "  User: {{ host_summary.user }}"
+          - "  Groups: {{ host_summary.groups }}"
+          - "  Status: ✓ Connected"
+          - "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      run_once: false
+

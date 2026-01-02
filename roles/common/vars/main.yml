@@ -6,7 +6,8 @@ timezone: "UTC"
 locale: "en_US.UTF-8"
 
 # User configuration
-ansible_user: pi
+# Note: This is a default value. The actual user should be set in the inventory file.
+# The inventory file should specify ansible_user for each host (e.g., sdconrox for Proxmox VM, pi for Raspberry Pi)
 ansible_become: yes
 
 # System packages

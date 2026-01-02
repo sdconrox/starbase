@@ -36,7 +36,26 @@ cluster_keys.json
 *secrets*.json
 *credentials*.json
 
+# SSH keys (crypt directory)
+**/.crypt/**
+**/.sdx/.crypt/**
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfvars
+!terraform/terraform.tfvars.example
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+
 # OS
 .DS_Store
 Thumbs.db
 
+# Kubernetes kubeconfig files
+kubeconfig-*.yaml
+kubeconfig-*.yml

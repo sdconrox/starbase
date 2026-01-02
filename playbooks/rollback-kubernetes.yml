@@ -1,0 +1,187 @@
+---
+- name: Rollback Kubernetes Deployment
+  hosts: raspberry_pi_cluster
+  become: yes
+  gather_facts: yes
+  remote_user: ansible
+
+  vars:
+    # Master node configuration
+    master_node: "k8s-master"
+
+  tasks:
+    - name: Display rollback warning
+      debug:
+        msg:
+          - "⚠️  WARNING: This will uninstall k3s and attempt to restore system configuration"
+          - "This action cannot be easily undone. Make sure you have backups!"
+          - "Press Ctrl+C within 10 seconds to cancel..."
+
+    - name: Pause for confirmation
+      pause:
+        seconds: 10
+
+    # Uninstall k3s
+    - name: Check if k3s is installed on master
+      stat:
+        path: /usr/local/bin/k3s
+      register: k3s_master_exists
+      when: inventory_hostname in groups['control_plane']
+
+    - name: Uninstall k3s from master node
+      shell: |
+        if [ -f /usr/local/bin/k3s-killall.sh ]; then
+          /usr/local/bin/k3s-killall.sh || true
+        fi
+        if [ -f /usr/local/bin/k3s-uninstall.sh ]; then
+          /usr/local/bin/k3s-uninstall.sh || true
+        fi
+      when:
+        - inventory_hostname in groups['control_plane']
+        - k3s_master_exists.stat.exists | default(false)
+      ignore_errors: yes
+      register: k3s_master_uninstall
+
+    - name: Wait for k3s master to stop
+      wait_for:
+        port: 6443
+        host: "{{ ansible_host }}"
+        state: stopped
+        timeout: 60
+      when:
+        - inventory_hostname in groups['control_plane']
+        - k3s_master_uninstall.changed | default(false)
+      ignore_errors: yes
+
+    - name: Check if k3s-agent is installed on workers
+      stat:
+        path: /usr/local/bin/k3s-agent
+      register: k3s_agent_exists
+      when: inventory_hostname in groups['workers']
+
+    - name: Uninstall k3s-agent from worker nodes
+      shell: |
+        if [ -f /usr/local/bin/k3s-agent-uninstall.sh ]; then
+          /usr/local/bin/k3s-agent-uninstall.sh || true
+        fi
+      when:
+        - inventory_hostname in groups['workers']
+        - k3s_agent_exists.stat.exists | default(false)
+      ignore_errors: yes
+      register: k3s_worker_uninstall
+
+    - name: Wait for k3s agents to stop
+      wait_for:
+        port: 10250
+        host: "{{ ansible_host }}"
+        state: stopped
+        timeout: 60
+      when:
+        - inventory_hostname in groups['workers']
+        - k3s_worker_uninstall.changed | default(false)
+      ignore_errors: yes
+
+    # Restore system configuration
+    - name: Check if fstab backup exists
+      stat:
+        path: /etc/fstab.bak
+      register: fstab_backup_exists
+
+    - name: Restore swap configuration from backup
+      copy:
+        src: /etc/fstab.bak
+        dest: /etc/fstab
+        remote_src: yes
+        backup: yes
+      when: fstab_backup_exists.stat.exists
+      ignore_errors: yes
+
+    - name: Restore swap manually (if no backup)
+      shell: |
+        sed -i 's/^#\(.* swap .*\)$/\1/' /etc/fstab
+      when: not fstab_backup_exists.stat.exists
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Check if cmdline.txt backup exists
+      stat:
+        path: /boot/cmdline.txt.bak
+      register: cmdline_backup_exists
+      when: ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
+
+    - name: Restore cgroups configuration from backup
+      copy:
+        src: /boot/cmdline.txt.bak
+        dest: /boot/cmdline.txt
+        remote_src: yes
+        backup: yes
+      when:
+        - ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
+        - cmdline_backup_exists.stat.exists | default(false)
+      ignore_errors: yes
+
+    - name: Remove Kubernetes sysctl settings
+      lineinfile:
+        path: /etc/sysctl.conf
+        regexp: "^{{ item | regex_escape() }}"
+        state: absent
+      loop:
+        - net.bridge.bridge-nf-call-iptables
+        - net.bridge.bridge-nf-call-ip6tables
+        - net.ipv4.ip_forward
+      ignore_errors: yes
+
+    - name: Remove .kube directory
+      file:
+        path: "{{ ansible_env.HOME | default('/home/' + ansible_user) }}/.kube"
+        state: absent
+      when: inventory_hostname in groups['control_plane']
+      ignore_errors: yes
+
+    - name: Remove k3s data directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/rancher/k3s
+        - /etc/rancher/k3s
+        - /var/lib/rancher
+      ignore_errors: yes
+
+    - name: Unload kernel modules (optional)
+      modprobe:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - br_netfilter
+        - overlay
+      ignore_errors: yes
+      failed_when: false
+
+    - name: Display rollback summary
+      debug:
+        msg:
+          - "Rollback completed. Summary:"
+          - "- k3s uninstalled from {{ 'master' if inventory_hostname in groups['control_plane'] else 'worker' }} node"
+          - "- System configuration restored where backups were available"
+          - "- Note: Some changes may require manual intervention (see ROLLBACK.md)"
+          - "- If cgroups were restored, a reboot may be required on ARM nodes"
+
+    - name: Prompt for reboot on ARM nodes
+      pause:
+        prompt: "Reboot required on ARM nodes if cgroups were restored. Reboot now? (yes/no)"
+        echo: yes
+      register: reboot_prompt
+      when:
+        - ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
+        - cmdline_backup_exists.stat.exists | default(false)
+
+    - name: Reboot ARM nodes if requested
+      reboot:
+        msg: "Rebooting to restore original cgroups configuration"
+        reboot_timeout: 300
+      when:
+        - ansible_architecture == "armv7l" or ansible_architecture == "aarch64"
+        - cmdline_backup_exists.stat.exists | default(false)
+        - reboot_prompt.user_input | default('no') | lower == 'yes'
+

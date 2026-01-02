@@ -5,6 +5,8 @@
   register: k3s_installed
 
 # Master node setup
+# Note: k3s automatically detects architecture (x86_64 for Proxmox VM, ARM for Raspberry Pi)
+# Mixed architecture clusters are supported - the master can be x86_64 while workers are ARM
 - name: Install k3s on master node
   shell: |
     curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} sh -s - \
@@ -46,7 +48,7 @@
     src: "{{ k3s_token_file }}"
   register: k3s_token
   delegate_to: "{{ master_node }}"
-  delegate_facts: yes
+  delegate_facts: true
   when: inventory_hostname in groups['workers']
 
 - name: Set k3s token fact
@@ -54,6 +56,9 @@
     k3s_join_token: "{{ k3s_token.content | b64decode | trim }}"
   when: inventory_hostname in groups['workers']
 
+# Worker node setup
+# Note: k3s automatically detects architecture (ARM for Raspberry Pi)
+# Workers will download the appropriate binary for their architecture
 - name: Install k3s on worker nodes
   shell: |
     curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} K3S_URL=https://{{ master_ip }}:6443 K3S_TOKEN={{ k3s_join_token }} sh -
@@ -71,28 +76,7 @@
     - inventory_hostname in groups['workers']
     - k3s_worker_install.changed | bool
 
-- name: Create .kube directory for ansible user
-  file:
-    path: "~{{ ansible_user }}/.kube"
-    state: directory
-    mode: '0755'
-  when: inventory_hostname in groups['control_plane']
-
-- name: Copy kubeconfig to ansible user home
-  copy:
-    src: /etc/rancher/k3s/k3s.yaml
-    dest: "~{{ ansible_user }}/.kube/config"
-    remote_src: yes
-    owner: "{{ ansible_user }}"
-    mode: '0600'
-  when: inventory_hostname in groups['control_plane']
-
-- name: Update kubeconfig server address
-  replace:
-    path: "~{{ ansible_user }}/.kube/config"
-    regexp: 'https://127.0.0.1:6443'
-    replace: "https://{{ master_ip }}:6443"
-  when: inventory_hostname in groups['control_plane']
+# Kubeconfig fetch removed - use playbooks/fetch-kubeconfig.yml instead
 
 - name: Verify cluster is ready
   command: /usr/local/bin/k3s kubectl get nodes
