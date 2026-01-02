@@ -11,7 +11,7 @@ Starbase automates the deployment of a Kubernetes cluster with a Proxmox VM as t
 - **Ansible**: Configures and deploys Kubernetes (k3s) across all nodes
   - Configures system settings (disable swap, enable cgroups on ARM, configure networking)
   - Deploys k3s (lightweight Kubernetes distribution)
-  - Sets up 1 VM master + 9 Raspberry Pi worker nodes
+  - Sets up 1 VM master + 10 Raspberry Pi worker nodes
   - Configures kubectl access
 
 ## Project Structure
