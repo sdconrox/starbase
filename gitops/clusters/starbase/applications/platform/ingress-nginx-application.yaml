@@ -18,7 +18,7 @@ spec:
             type: LoadBalancer
           ingressClassResource:
             name: nginx
-            default: false
+            default: true
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
