@@ -1,0 +1,17 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: starbase-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 10.60.0.240-10.60.0.254
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: starbase-l2
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - starbase-pool
