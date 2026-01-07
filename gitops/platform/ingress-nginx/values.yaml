@@ -1,9 +1,0 @@
-controller:
-  service:
-    type: LoadBalancer
-
-  # Safer when Traefik might still exist:
-  # don't try to steal "default" IngressClass automatically.
-  ingressClassResource:
-    name: nginx
-    default: false
