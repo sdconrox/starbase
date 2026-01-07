@@ -6,4 +6,5 @@ resources:
   - platform/ingress-nginx-application.yaml
   - platform/cert-manager-application.yaml
   - platform/external-dns-application.yaml
+  - platform/external-dns-secrets-application.yaml
   - apps/kubernetes-dashboard-application.yaml
