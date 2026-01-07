@@ -1,19 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: starbase-applications
+  name: kubernetes-dashboard
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "-10"
 spec:
   project: default
   source:
     repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
     targetRevision: HEAD
-    path: gitops/clusters/starbase/applications
+    path: gitops/apps/kubernetes-dashboard
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: kubernetes-dashboard
   syncPolicy:
     automated:
       prune: true
