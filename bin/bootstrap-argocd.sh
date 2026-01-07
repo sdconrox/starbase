@@ -1,6 +1,14 @@
-kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+#!/usr/bin/env bash
+set -euo pipefail
 
-cat > /tmp/argocd-min.yaml <<'YAML'
+NAMESPACE="argocd"
+
+kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 || true
+helm repo update >/dev/null
+
+cat > gitops/clusters/starbase/argocd/install/values.yaml <<'YAML'
 # Keep this minimal; we can tune later
 
 # Install CRDs with the chart (recommended for Helm installs)
@@ -9,7 +17,7 @@ crds:
 YAML
 
 helm upgrade --install argocd argo/argo-cd \
-  -n argocd \
+  -n "$NAMESPACE" \
   -f gitops/clusters/starbase/argocd/install/values.yaml \
   --wait
 
@@ -50,7 +58,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: REPLACE_ME_REPO_URL
+    repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
     targetRevision: HEAD
     path: gitops/clusters/starbase/apps
   destination:
@@ -73,7 +81,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: REPLACE_ME_REPO_URL
+    repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
     targetRevision: HEAD
     path: gitops/clusters/starbase/platform
   destination:
