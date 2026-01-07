@@ -3,4 +3,5 @@ kind: Kustomization
 resources:
   - platform/metallb-application.yaml
   - platform/ingress-nginx-application.yaml
+  - platform/cert-manager-application.yaml
   - apps/kubernetes-dashboard-application.yaml
