@@ -18,8 +18,8 @@ spec:
           - name: CF_API_TOKEN
             valueFrom:
               secretKeyRef:
-                name: cloudflare-api-token
-                key: cloudflare_api_token
+                name: starbase-external-dns
+                key: credential
         domainFilters:
           - apocalypso.xyz
         txtOwnerId: starbase
