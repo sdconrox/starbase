@@ -3,3 +3,6 @@
 # Install CRDs with the chart (recommended for Helm installs)
 crds:
   install: true
+configs:
+  params:
+    server.insecure: true

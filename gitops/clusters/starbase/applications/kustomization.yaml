@@ -3,8 +3,9 @@ kind: Kustomization
 resources:
   - platform/metallb-application.yaml
   - platform/onepassword-connect-application.yaml
+  - platform/onepassword-secrets-application.yaml
   - platform/ingress-nginx-application.yaml
   - platform/cert-manager-application.yaml
   - platform/external-dns-application.yaml
-  - platform/external-dns-secrets-application.yaml
+  - platform/cloudflared-application.yaml
   - apps/kubernetes-dashboard-application.yaml
