@@ -21,6 +21,7 @@ system_packages:
   - vim
   - htop
   - net-tools
+  - nfs-common
 
 # Disable swap for Kubernetes
 disable_swap: true
