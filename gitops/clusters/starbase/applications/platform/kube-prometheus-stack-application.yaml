@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 67.4.0
+    targetRevision: 80.13.2
     helm:
       values: |
         grafana:
@@ -27,21 +27,36 @@ spec:
           additionalDataSources:
             - name: Loki
               type: loki
-              url: http://loki-stack.monitoring.svc.cluster.local:3100
+              uid: loki
               access: proxy
+              url: http://loki.monitoring.svc.cluster.local:3100
               isDefault: false
+          persistence:
+            enabled: true
+            storageClassName: nfs
+            size: 1Gi
         prometheus:
           prometheusSpec:
             retention: 7d
             storageSpec:
               volumeClaimTemplate:
                 spec:
+                  storageClassName: nfs
                   accessModes: ["ReadWriteOnce"]
                   resources:
                     requests:
-                      storage: 10Gi
+                      storage: 100Gi
         alertmanager:
           enabled: true
+          alertmanagerSpec:
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: nfs
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 1Gi
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

@@ -1,27 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: loki-stack
+  name: promtail
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "26"
+    argocd.argoproj.io/sync-wave: "27"
 spec:
   project: default
   source:
     repoURL: https://grafana.github.io/helm-charts
-    chart: loki-stack
-    targetRevision: 2.10.2
+    chart: promtail
+    targetRevision: 6.17.1
     helm:
       values: |
-        loki:
-          enabled: true
-          persistence:
-            enabled: true
-            size: 10Gi
-        promtail:
-          enabled: true
-        grafana:
-          enabled: false  # Using kube-prometheus-stack's Grafana
+        config:
+          clients:
+            - url: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
