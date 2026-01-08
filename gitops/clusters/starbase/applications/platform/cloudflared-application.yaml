@@ -8,24 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://cloudflare.github.io/helm-charts
-    chart: cloudflare-tunnel
-    targetRevision: 0.3.2
-    helm:
-      values: |
-        cloudflare:
-          # Your Cloudflare account number.
-          account: "865a2185e87bf95ede74dd18a8f5dbc4"
-          # The name of the tunnel this instance will serve
-          tunnelName: "starbase"
-          # The ID of the above tunnel.
-          tunnelId: "cddd6ba8-afae-4218-87a5-813ef9e92287"
-          secretName: cloudflared-tunnel-token
-          secretKey: token
-          ingress:
-            - hostname: argocd.apocalypso.xyz
-              service: http://argocd-server.argocd.svc.cluster.local:80
-            - service: http_status:404
+    repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
+    targetRevision: HEAD
+    path: gitops/platform/cloudflared
   destination:
     server: https://kubernetes.default.svc
     namespace: cloudflared
