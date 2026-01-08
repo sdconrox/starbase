@@ -11,4 +11,5 @@ resources:
   - platform/cloudflared-application.yaml
   - platform/kube-prometheus-stack-application.yaml
   - platform/loki-stack-application.yaml
+  - platform/nfs-provisioner-application.yaml
   - apps/kubernetes-dashboard-application.yaml
