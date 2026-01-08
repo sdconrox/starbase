@@ -42,6 +42,10 @@ spec:
           replicas: 0
         backend:
           replicas: 0
+        lokiCanary:
+          enabled: false
+        test:
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
