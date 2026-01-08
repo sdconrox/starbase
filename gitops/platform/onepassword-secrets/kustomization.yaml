@@ -4,3 +4,4 @@ resources:
   - external-dns-secret.yaml
   - cloudflared-secret.yaml
   - cert-manager-secret.yaml
+  - grafana-secret.yaml
