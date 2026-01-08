@@ -24,6 +24,12 @@ spec:
           sidecar:
             datasources:
               enabled: true
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              url: http://loki-stack.monitoring.svc.cluster.local:3100
+              access: proxy
+              isDefault: false
         prometheus:
           prometheusSpec:
             retention: 7d
