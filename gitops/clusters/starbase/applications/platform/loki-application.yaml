@@ -13,6 +13,7 @@ spec:
     targetRevision: 6.49.0
     helm:
       values: |
+        deploymentMode: SingleBinary
         loki:
           auth_enabled: false
           commonConfig:
@@ -42,6 +43,10 @@ spec:
           replicas: 0
         backend:
           replicas: 0
+        chunksCache:
+          enabled: false
+        resultsCache:
+          enabled: false
         lokiCanary:
           enabled: false
         test:
