@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
+spec:
+  project: default
+  source:
+    repoURL: https://vmware-tanzu.github.io/helm-charts
+    chart: velero
+    targetRevision: 5.1.1
+    helm:
+      values: |
+        initContainers:
+          - name: velero-plugin-for-aws
+            image: velero/velero-plugin-for-aws:v1.9.2
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+              - mountPath: /target
+                name: plugins
+        configuration:
+          provider: aws
+          backupStorageLocation:
+            name: default
+            bucket: starbase-backups
+            config:
+              region: us-east-1
+              s3ForcePathStyle: "true"
+              s3Url: https://gateway.storjshare.io
+          volumeSnapshotLocation:
+            name: default
+            config:
+              region: us-east-1
+        credentials:
+          useSecret: true
+          existingSecret: sdx-starbase-storj-key-0
+        deployRestic: false
+        snapshotsEnabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

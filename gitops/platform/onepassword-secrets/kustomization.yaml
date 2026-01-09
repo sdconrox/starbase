@@ -5,3 +5,4 @@ resources:
   - cloudflared-secret.yaml
   - cert-manager-secret.yaml
   - grafana-secret.yaml
+  - velero-storj-secret.yaml
