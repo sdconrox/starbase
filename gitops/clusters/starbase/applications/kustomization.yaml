@@ -14,5 +14,4 @@ resources:
   - platform/promtail-application.yaml
   - platform/nfs-provisioner-application.yaml
   - platform/velero-application.yaml
-  - platform/velero-schedule-application.yaml
   - apps/kubernetes-dashboard-application.yaml
