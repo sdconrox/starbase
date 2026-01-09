@@ -42,7 +42,7 @@ spec:
         upgradeCrds:
           image:
             repository: bitnami/kubectl
-            tag: "latest"
+            tag: "v1.30"
   destination:
     server: https://kubernetes.default.svc
     namespace: velero
