@@ -39,6 +39,10 @@ spec:
           existingSecret: sdx-starbase-storj-key-0
         deployNodeAgent: false
         snapshotsEnabled: false
+        upgradeCrds:
+          image:
+            repository: bitnami/kubectl
+            tag: "1.35"
   destination:
     server: https://kubernetes.default.svc
     namespace: velero
