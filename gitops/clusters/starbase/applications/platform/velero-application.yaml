@@ -41,7 +41,7 @@ spec:
         snapshotsEnabled: false
         upgradeCrds:
           image:
-            repository: bitnami/kubectl
+            repository: registry.k8s.io/kubectl
             tag: "v1.30"
   destination:
     server: https://kubernetes.default.svc
