@@ -39,10 +39,9 @@ spec:
           existingSecret: sdx-starbase-storj-key-0
         deployNodeAgent: false
         snapshotsEnabled: false
-        upgradeCrds:
+        kubectl:
           image:
             repository: registry.k8s.io/kubectl
-            tag: "v1.30"
   destination:
     server: https://kubernetes.default.svc
     namespace: velero
