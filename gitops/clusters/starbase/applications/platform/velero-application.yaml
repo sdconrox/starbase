@@ -21,22 +21,23 @@ spec:
               - mountPath: /target
                 name: plugins
         configuration:
-          provider: aws
           backupStorageLocation:
-            name: default
-            bucket: starbase-backups
-            config:
-              region: us-east-1
-              s3ForcePathStyle: "true"
-              s3Url: https://gateway.storjshare.io
+            - name: default
+              bucket: starbase-backups
+              provider: aws
+              config:
+                region: us-east-1
+                s3ForcePathStyle: "true"
+                s3Url: https://gateway.storjshare.io
           volumeSnapshotLocation:
-            name: default
-            config:
-              region: us-east-1
+            - name: default
+              provider: aws
+              config:
+                region: us-east-1
         credentials:
           useSecret: true
           existingSecret: sdx-starbase-storj-key-0
-        deployRestic: false
+        deployNodeAgent: false
         snapshotsEnabled: false
   destination:
     server: https://kubernetes.default.svc
