@@ -29,6 +29,7 @@ spec:
                 region: us-east-1
                 s3ForcePathStyle: "true"
                 s3Url: https://gateway.storjshare.io
+                checksumAlgorithm: ""
           volumeSnapshotLocation:
             - name: default
               provider: aws
