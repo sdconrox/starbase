@@ -41,8 +41,8 @@ spec:
         snapshotsEnabled: false
         kubectl:
           image:
-            repository: registry.k8s.io/kubectl
-            tag: "v1.34.3"
+            repository: bitnamilegacy/kubectl
+            tag: "1.34"
   destination:
     server: https://kubernetes.default.svc
     namespace: velero
