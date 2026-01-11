@@ -13,6 +13,11 @@ Starbase automates the deployment of a Kubernetes cluster with a Proxmox VM as t
   - Deploys k3s (lightweight Kubernetes distribution)
   - Sets up 1 VM master + 10 Raspberry Pi worker nodes
   - Configures kubectl access
+- **GitOps (ArgoCD)**: Manages all platform applications and workloads declaratively
+  - Continuous deployment from Git repository
+  - Automated synchronization and self-healing
+  - Platform applications (monitoring, ingress, storage, etc.)
+  - Application management via ArgoCD UI
 
 ## Project Structure
 
@@ -35,11 +40,33 @@ starbase/
 │       ├── tasks/
 │       ├── vars/
 │       └── templates/
-├── kubernetes-dashboard/         # Kubernetes Dashboard deployment
+├── gitops/                       # GitOps manifests (ArgoCD)
+│   ├── apps/                     # Application definitions
+│   │   └── kubernetes-dashboard/ # Kubernetes Dashboard manifests
+│   ├── clusters/                 # Cluster-specific configurations
+│   │   └── starbase/
+│   │       ├── applications/    # ArgoCD Application definitions
+│   │       │   ├── platform/     # Platform applications (monitoring, ingress, etc.)
+│   │       │   └── apps/         # User applications
+│   │       └── argocd/           # ArgoCD installation config
+│   │           └── install/      # Bootstrap configuration
+│   └── platform/                 # Platform component manifests
+│       ├── metallb/              # MetalLB load balancer
+│       ├── cert-manager/         # Certificate management
+│       ├── ingress-nginx/        # Ingress controller
+│       ├── cloudflared/          # Cloudflare tunnel
+│       ├── velero/               # Backup solution
+│       └── onepassword-secrets/  # 1Password Connect secrets
+├── kubernetes-dashboard/         # Kubernetes Dashboard deployment (legacy)
 │   ├── deploy-dashboard.yml      # Deploy Kubernetes Dashboard (idempotent)
 │   ├── access-dashboard.sh       # Access script with port-forwarding
 │   └── README.md                  # Dashboard deployment guide
-├── proxmox/                      # Proxmox setup documentation
+├── docs/                         # Documentation
+│   ├── kubernetes-dashboard/     # Dashboard documentation
+│   ├── proxmox/                  # Proxmox setup guides
+│   ├── terraform/                # Terraform documentation
+│   └── ROLLBACK.md               # Rollback procedures
+├── proxmox/                      # Proxmox setup documentation (legacy)
 │   ├── README.md                 # Guide for creating cloud-init template
 │   └── generate-ssh-key.sh      # SSH key generation utility
 ├── terraform/                    # Terraform configuration
@@ -49,12 +76,18 @@ starbase/
 │   ├── terraform.tfvars.example  # Example configuration
 │   └── templates/                # Cloud-init templates
 ├── bin/                          # Utility scripts
+│   ├── bootstrap-argocd.sh      # Bootstrap ArgoCD installation
+│   ├── bootstrap-secrets.sh      # Bootstrap 1Password secrets
+│   ├── check-platform-versions.py # Check platform app versions
+│   ├── check-sync-waves.sh      # Check ArgoCD sync-wave annotations
+│   ├── download-metallb-crds.sh # Download MetalLB CRDs
+│   ├── access-k8s-dashboard.sh  # Access Kubernetes Dashboard
 │   ├── install-credential-scanners.sh  # Install credential scanning tools
 │   ├── scan-credentials.sh       # Scan for hardcoded secrets
+│   ├── generate-ssh-key.sh       # SSH key generation
 │   └── update-inventory-from-terraform.sh  # Sync Terraform output to inventory
 ├── inventory                     # Ansible inventory (VM master + Raspberry Pi workers)
 ├── ansible.cfg                   # Ansible configuration (default user: ansible)
-├── ROLLBACK.md                   # Rollback procedures and documentation
 └── README.md                     # This file
 ```
 
@@ -82,6 +115,7 @@ starbase/
 1. **Proxmox** (First): Create a cloud-init template in Proxmox
 2. **Terraform** (Second): Use Terraform to create the master node VM from the template
 3. **Ansible** (Third): Deploy Kubernetes to all nodes using Ansible
+4. **GitOps/ArgoCD** (Fourth): Bootstrap ArgoCD and deploy platform applications
 
 ## Configuration
 
@@ -257,6 +291,124 @@ kubectl get nodes
 kubectl get pods --all-namespaces
 ```
 
+## Post-Deployment: GitOps Setup
+
+After the Kubernetes cluster is deployed, you can set up GitOps with ArgoCD to manage all platform applications declaratively.
+
+### Step 6: Bootstrap ArgoCD
+
+ArgoCD provides continuous deployment from your Git repository. Bootstrap ArgoCD:
+
+```bash
+bash bin/bootstrap-argocd.sh
+```
+
+This script will:
+- Create the `argocd` namespace
+- Install ArgoCD using Helm
+- Create a bootstrap Application that manages all other applications
+- Configure ArgoCD to sync from your Git repository
+
+**Access ArgoCD UI:**
+
+```bash
+kubectl port-forward service/argocd-server -n argocd 8080:443
+```
+
+Then open `https://localhost:8080` in your browser (accept the self-signed certificate).
+
+**Get initial admin password:**
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+
+Login with username `admin` and the password above.
+
+### Step 7: Bootstrap Secrets (1Password Connect)
+
+If using 1Password Connect for secret management:
+
+```bash
+bash bin/bootstrap-secrets.sh
+```
+
+This creates the necessary secrets for 1Password Connect to authenticate with your 1Password account.
+
+**Note:** You'll need to:
+1. Have 1Password Connect credentials file (`1password-credentials.json`)
+2. Have a 1Password Connect API token
+3. Update the script with your actual token before running
+
+### Platform Applications
+
+Once ArgoCD is bootstrapped, it will automatically deploy the following platform applications (in order via sync-waves):
+
+1. **ArgoCD** (sync-wave: -100) - GitOps continuous deployment
+2. **1Password Connect** (sync-wave: -14) - External Secrets Operator
+3. **NFS Provisioner** (sync-wave: -12) - Storage provisioner
+4. **MetalLB** (sync-wave: -11) - Load balancer for bare metal
+5. **Ingress NGINX** (sync-wave: -10) - Ingress controller
+6. **External DNS** (sync-wave: -9) - DNS record management
+7. **Cert Manager** (sync-wave: -8) - TLS certificate management
+8. **Cert Manager Issuers** (sync-wave: -7) - Certificate issuers (Let's Encrypt)
+9. **Kube Prometheus Stack** (sync-wave: -6) - Monitoring (Prometheus + Grafana)
+10. **Loki** (sync-wave: -5) - Log aggregation
+11. **Promtail** (sync-wave: -4) - Log collection
+12. **Cloudflared** (sync-wave: -3) - Cloudflare tunnel
+13. **Velero** (sync-wave: -2) - Backup solution
+14. **Velero Schedule** (sync-wave: -1) - Backup schedules
+
+All applications are managed via ArgoCD and will automatically sync when changes are pushed to the Git repository.
+
+### GitOps Workflow
+
+The project follows a GitOps workflow where:
+
+1. **All manifests are stored in Git** (`gitops/` directory)
+2. **ArgoCD monitors the repository** and automatically syncs changes
+3. **Changes are made via Git commits** - edit manifests and push to trigger deployment
+4. **ArgoCD detects drift** and can auto-correct or alert on differences
+5. **Sync waves control deployment order** - platform apps deploy before user apps
+
+**Making changes:**
+- Edit manifests in `gitops/` directory
+- Commit and push to Git repository
+- ArgoCD automatically detects and syncs changes (if auto-sync enabled)
+- Or manually sync via ArgoCD UI or CLI
+
+**Application structure:**
+- Platform applications: `gitops/clusters/starbase/applications/platform/`
+- User applications: `gitops/clusters/starbase/applications/apps/`
+- Platform manifests: `gitops/platform/`
+- App manifests: `gitops/apps/`
+
+### Utility Scripts
+
+**Check platform application versions:**
+
+```bash
+python3 bin/check-platform-versions.py
+```
+
+This checks all platform applications against their latest available versions and reports which ones are outdated.
+
+**Check sync-wave deployment order:**
+
+```bash
+bash bin/check-sync-waves.sh
+```
+
+This lists all sync-wave annotations in the platform folders, sorted from least to greatest, so you can verify the deployment order.
+
+**Download MetalLB CRDs:**
+
+```bash
+bash bin/download-metallb-crds.sh [version]
+```
+
+Downloads and formats MetalLB CRDs for a specific version (default: v0.15.3) for easy replacement in `metallb.yaml`.
+
 ## Additional Playbooks
 
 ### Fetch Kubeconfig
@@ -389,19 +541,30 @@ Then reboot the device.
 
 - **k3s**: v1.34.3+k3s1 (latest stable as of 2024)
 - **Kubernetes**: 1.34.3
-- **Dashboard**: v2.7.0 (when deployed)
+- **ArgoCD**: Managed via Helm chart (check `kube-prometheus-stack-application.yaml` for version)
+- **Platform Applications**: Check versions with `bin/check-platform-versions.py`
+  - MetalLB: v0.15.3
+  - Cert Manager: v1.19.2
+  - External DNS: 1.20.0
+  - Kube Prometheus Stack: 80.13.3
+  - Ingress NGINX: 4.14.1
+  - 1Password Connect: 2.1.1
+  - Velero: 11.3.2
 
 ## Notes
 
 - **k3s** is used by default as it's optimized for ARM and resource-constrained devices
 - **Mixed Architecture**: The master (x86_64 VM) and workers (ARM Raspberry Pi) work together seamlessly with k3s
-- The cluster uses local storage by default
+- **Storage**: NFS provisioner is used for persistent volumes (deployed via ArgoCD)
+- **GitOps**: All platform applications are managed via ArgoCD from the Git repository
+- **Sync Waves**: Platform applications use sync-wave annotations to control deployment order
 - All nodes should be on the same network segment
 - Ensure adequate power supply for all Raspberry Pi devices (official power adapters recommended)
 - The master VM is managed via Terraform - use `terraform destroy` to remove it
-- For production use, consider adding external storage and backup solutions
 - Kubeconfig is **not** automatically fetched during deployment - run `playbooks/fetch-kubeconfig.yml` separately
 - All playbooks are idempotent and can be run multiple times safely
+- ArgoCD applications use automated sync with prune and self-heal enabled
+- Platform applications deploy in negative sync-waves (< 0) to ensure they deploy before user applications
 
 ## Setup Components
 
@@ -443,10 +606,26 @@ Ansible handles the Kubernetes cluster deployment. Key files:
 
 ### Kubernetes Dashboard
 
-A standalone deployment for the Kubernetes Dashboard is available in `kubernetes-dashboard/`:
+The Kubernetes Dashboard is deployed via GitOps (ArgoCD) in `gitops/apps/kubernetes-dashboard/`. Access it using:
 
-- `deploy-dashboard.yml`: Idempotent Ansible playbook to deploy the dashboard
-- `access-dashboard.sh`: Script to access the dashboard with port-forwarding
-- `README.md`: Detailed deployment and access instructions
+```bash
+bash bin/access-k8s-dashboard.sh
+```
 
-**Purpose:** Deploy and access the official Kubernetes web UI for cluster management.
+**Legacy deployment:** A standalone Ansible deployment is also available in `kubernetes-dashboard/` for manual deployment if needed.
+
+### GitOps (ArgoCD)
+
+All platform applications and workloads are managed via GitOps using ArgoCD:
+
+- **Repository**: All manifests are stored in the `gitops/` directory
+- **Continuous Deployment**: ArgoCD automatically syncs changes from Git
+- **Self-Healing**: ArgoCD monitors and corrects drift from Git state
+- **Application Management**: All applications are defined as ArgoCD Applications
+
+**Key directories:**
+- `gitops/clusters/starbase/applications/`: ArgoCD Application definitions
+- `gitops/platform/`: Platform component manifests (MetalLB, cert-manager, etc.)
+- `gitops/apps/`: Application manifests (Kubernetes Dashboard, etc.)
+
+**Bootstrap:** Use `bin/bootstrap-argocd.sh` to install and configure ArgoCD.
