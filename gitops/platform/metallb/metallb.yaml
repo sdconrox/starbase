@@ -1738,6 +1738,17 @@ rules:
   - create
   - patch
 - apiGroups:
+  - metallb.io
+  resources:
+  - configurationstates
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
   - policy
   resourceNames:
   - controller
