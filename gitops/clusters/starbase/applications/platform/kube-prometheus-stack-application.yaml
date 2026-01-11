@@ -18,6 +18,8 @@ spec:
           admin:
             existingSecret: grafana-admin
             passwordKey: password
+          initChownData:
+            enabled: false
           grafana.ini:
             server:
               root_url: https://grafana.apocalypso.xyz
