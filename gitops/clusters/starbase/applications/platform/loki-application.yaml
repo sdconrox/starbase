@@ -4,7 +4,7 @@ metadata:
   name: loki
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "26"
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   project: default
   source:
