@@ -15,6 +15,7 @@ CRDS=(
     "metallb.io_bgpadvertisements.yaml"
     "metallb.io_bgppeers.yaml"
     "metallb.io_communities.yaml"
+    "metallb.io_configurationstates.yaml"
     "metallb.io_ipaddresspools.yaml"
     "metallb.io_l2advertisements.yaml"
     "metallb.io_servicel2statuses.yaml"
