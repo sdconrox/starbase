@@ -51,39 +51,16 @@ cat > gitops/clusters/starbase/argocd/install/bootstrap-applications.yaml <<'YAM
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: starbase-apps
+  name: starbase-applications
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/sync-wave: "-100"
 spec:
   project: default
   source:
     repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
     targetRevision: HEAD
-    path: gitops/clusters/starbase/apps
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: starbase-platform
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  project: default
-  source:
-    repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
-    targetRevision: HEAD
-    path: gitops/clusters/starbase/platform
+    path: gitops/clusters/starbase/applications
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
