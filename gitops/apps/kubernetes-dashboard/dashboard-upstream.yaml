@@ -202,6 +202,13 @@ spec:
             # If not specified, Dashboard will attempt to auto discover the API server and connect
             # to it. Uncomment only if the default does not work.
             # - --apiserver-host=http://my-address:port
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - name: kubernetes-dashboard-certs
               mountPath: /certs
@@ -279,6 +286,13 @@ spec:
           ports:
             - containerPort: 8000
               protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
           livenessProbe:
             httpGet:
               scheme: HTTP
