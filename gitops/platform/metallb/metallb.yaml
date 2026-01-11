@@ -352,6 +352,17 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.19.0
   name: bgppeers.metallb.io
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: metallb-webhook-service
+          namespace: metallb-system
+          path: /convert
+      conversionReviewVersions:
+      - v1beta1
+      - v1beta2
   group: metallb.io
   names:
     kind: BGPPeer
@@ -1338,6 +1349,92 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
+  name: servicebgpstatuses.metallb.io
+spec:
+  group: metallb.io
+  names:
+    kind: ServiceBGPStatus
+    listKind: ServiceBGPStatusList
+    plural: servicebgpstatuses
+    singular: servicebgpstatus
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.node
+      name: Node
+      type: string
+    - jsonPath: .status.serviceName
+      name: Service Name
+      type: string
+    - jsonPath: .status.serviceNamespace
+      name: Service Namespace
+      type: string
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: ServiceBGPStatus exposes the BGP peers a service is configured
+          to be advertised to, per relevant node.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ServiceBGPStatusSpec defines the desired state of ServiceBGPStatus.
+            type: object
+          status:
+            description: MetalLBServiceBGPStatus defines the observed state of ServiceBGPStatus.
+            properties:
+              node:
+                description: Node indicates the node announcing the service.
+                type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
+              peers:
+                description: |-
+                  Peers indicate the BGP peers for which the service is configured to be advertised to.
+                  The service being actually advertised to a given peer depends on the session state and is not indicated here.
+                items:
+                  type: string
+                type: array
+              serviceName:
+                description: ServiceName indicates the service this status represents.
+                type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
+              serviceNamespace:
+                description: ServiceNamespace indicates the namespace of the service.
+                type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: servicel2statuses.metallb.io
 spec:
   group: metallb.io
@@ -1423,92 +1520,6 @@ spec:
     subresources:
       status: {}
 ---
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
-  name: servicebgpstatuses.metallb.io
-spec:
-  group: metallb.io
-  names:
-    kind: ServiceBGPStatus
-    listKind: ServiceBGPStatusList
-    plural: servicebgpstatuses
-    singular: servicebgpstatus
-  scope: Namespaced
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.node
-      name: Node
-      type: string
-    - jsonPath: .status.serviceName
-      name: Service Name
-      type: string
-    - jsonPath: .status.serviceNamespace
-      name: Service Namespace
-      type: string
-    name: v1beta1
-    schema:
-      openAPIV3Schema:
-        description: ServiceBGPStatus exposes the BGP peers a service is configured
-          to be advertised to, per relevant node.
-        properties:
-          apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-            type: string
-          kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: ServiceBGPStatusSpec defines the desired state of ServiceBGPStatus.
-            type: object
-          status:
-            description: MetalLBServiceBGPStatus defines the observed state of ServiceBGPStatus.
-            properties:
-              node:
-                description: Node indicates the node announcing the service.
-                type: string
-                x-kubernetes-validations:
-                - message: Value is immutable
-                  rule: self == oldSelf
-              peers:
-                description: |-
-                  Peers indicate the BGP peers for which the service is configured to be advertised to.
-                  The service being actually advertised to a given peer depends on the session state and is not indicated here.
-                items:
-                  type: string
-                type: array
-              serviceName:
-                description: ServiceName indicates the service this status represents.
-                type: string
-                x-kubernetes-validations:
-                - message: Value is immutable
-                  rule: self == oldSelf
-              serviceNamespace:
-                description: ServiceNamespace indicates the namespace of the service.
-                type: string
-                x-kubernetes-validations:
-                - message: Value is immutable
-                  rule: self == oldSelf
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1579,25 +1590,17 @@ rules:
 - apiGroups:
   - metallb.io
   resources:
-  - configurationstates
+  - ipaddresspools
   verbs:
   - get
   - list
   - watch
-  - create
-  - update
-  - patch
 - apiGroups:
   - metallb.io
   resources:
-  - ipaddresspools
   - ipaddresspools/status
   verbs:
-  - get
-  - list
-  - watch
   - update
-  - patch
 - apiGroups:
   - metallb.io
   resources:
@@ -1637,6 +1640,7 @@ rules:
   - pods
   verbs:
   - list
+  - get
 - apiGroups:
   - ""
   resources:
@@ -1701,6 +1705,13 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - metallb.io
+  resources:
+  - servicebgpstatuses
+  - servicebgpstatuses/status
+  verbs:
+  - '*'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -1738,17 +1749,6 @@ rules:
   - create
   - patch
 - apiGroups:
-  - metallb.io
-  resources:
-  - configurationstates
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-- apiGroups:
   - policy
   resourceNames:
   - controller
@@ -1762,7 +1762,6 @@ rules:
   - metallb-webhook-configuration
   resources:
   - validatingwebhookconfigurations
-  - mutatingwebhookconfigurations
   verbs:
   - create
   - delete
@@ -1775,7 +1774,6 @@ rules:
   - admissionregistration.k8s.io
   resources:
   - validatingwebhookconfigurations
-  - mutatingwebhookconfigurations
   verbs:
   - list
   - watch
@@ -1785,10 +1783,10 @@ rules:
   - bfdprofiles.metallb.io
   - bgpadvertisements.metallb.io
   - bgppeers.metallb.io
-  - configurationstates.metallb.io
   - ipaddresspools.metallb.io
   - l2advertisements.metallb.io
   - communities.metallb.io
+  - configurationstates.metallb.io
   resources:
   - customresourcedefinitions
   verbs:
@@ -1806,6 +1804,26 @@ rules:
   verbs:
   - list
   - watch
+- apiGroups:
+  - metallb.io
+  resources:
+  - configurationstates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - metallb.io
+  resources:
+  - configurationstates/status
+  verbs:
+  - get
+  - patch
+  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -1819,6 +1837,8 @@ rules:
   resources:
   - servicel2statuses
   - servicel2statuses/status
+  - configurationstates
+  - configurationstates/status
   verbs:
   - '*'
 - apiGroups:
@@ -1921,7 +1941,7 @@ subjects:
 apiVersion: v1
 data:
   excludel2.yaml: |
-    announcedInterfacesToExclude: ["^docker.*", "^cbr.*", "^dummy.*", "^virbr.*", "^lxcbr.*", "^veth.*", "^lo$", "^cali.*", "^tunl.*", "^flannel.*", "^kube-ipvs.*", "^cni.*", "^nodelocaldns.*"]
+    announcedInterfacesToExclude: ["^docker.*", "^cbr.*", "^dummy.*", "^virbr.*", "^lxcbr.*", "^veth.*", "^lo$", "^cali.*", "^tunl.*", "^flannel.*", "^kube-ipvs.*", "^cni.*", "^nodelocaldns.*", "^lxc.*"]
 kind: ConfigMap
 metadata:
   name: metallb-excludel2
@@ -2004,13 +2024,6 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 200m
-            memory: 200Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -2066,6 +2079,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: METALLB_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: METALLB_HOST
           valueFrom:
             fieldRef:
@@ -2106,13 +2123,6 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 200m
-            memory: 200Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -2153,6 +2163,7 @@ spec:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
+  creationTimestamp: null
   name: metallb-webhook-configuration
 webhooks:
 - admissionReviewVersions:
