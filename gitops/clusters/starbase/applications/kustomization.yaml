@@ -7,7 +7,6 @@ resources:
   - platform/cert-manager-application.yaml
   - platform/cert-manager-issuers-application.yaml
   - platform/ingress-nginx-application.yaml
-  - platform/ingress-nginx-platform-application.yaml
   - platform/external-dns-application.yaml
   - platform/cloudflared-application.yaml
   - platform/kube-prometheus-stack-application.yaml
