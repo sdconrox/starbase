@@ -25,25 +25,33 @@ data:
         - Kubernetes Dashboard:
             href: https://dashboard.apocalypso.xyz/
             description: Kubernetes Dashboard
+            icon: kubernetes
         - ArgoCD:
             href: https://argocd.apocalypso.xyz/
             description: Continuous deployment
+            icon: argocd
         - Grafana:
             href: https://grafana.apocalypso.xyz/
             description: Metrics and logging across the cluster
-
+            icon: grafana
     - User Services:
         - IT Tools:
             href: https://it-tools.apocalypso.xyz/
             description: An assortment of developer tools
+            icon: it-tools
         - Drawi.io:
             href: https://drawio.apocalypso.xyz/
             description: Diagrams
-
+            icon: drawio
+        - Open Speed Test:
+            href: https://openspeedtest.apocalypso.xyz/
+            description: Test your internet speed
+            icon: speedtest
     - Ingrastructure Services:
         - Proxmox:
             href: https://proxmox.sdconrox.com/
             description: Proxmox
+            icon: proxmox
   widgets.yaml: |
     - resources:
         backend: resources

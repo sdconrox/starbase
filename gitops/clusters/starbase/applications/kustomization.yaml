@@ -19,3 +19,4 @@ resources:
   - apps/it-tools-application.yaml
   - apps/homepage-application.yaml
   - apps/drawio-application.yaml
+  - apps/openspeedtest-application.yaml

@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openspeedtest
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
+    targetRevision: HEAD
+    path: gitops/apps/openspeedtest
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openspeedtest
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
