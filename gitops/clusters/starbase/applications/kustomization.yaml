@@ -22,3 +22,4 @@ resources:
   - apps/openspeedtest-application.yaml
   - apps/stirling-pdf-application.yaml
   - apps/homarr-application.yaml
+  - apps/homebox-application.yaml

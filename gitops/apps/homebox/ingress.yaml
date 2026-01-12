@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homebox
+  namespace: homebox
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    external-dns.alpha.kubernetes.io/controller: "false"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - homebox.apocalypso.xyz
+      secretName: homebox-tls
+  rules:
+    - host: homebox.apocalypso.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homebox
+                port:
+                  number: 80

@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: homebox
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homebox
+  namespace: homebox
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homebox
+  namespace: homebox
+  labels:
+    app: homebox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homebox
+  template:
+    metadata:
+      labels:
+        app: homebox
+    spec:
+      serviceAccountName: homebox
+      initContainers:
+        - name: init-permissions
+          image: busybox:latest
+          command: ['sh', '-c']
+          args:
+            - |
+              mkdir -p /data
+              chown -R 65532:65532 /data
+              chmod -R 755 /data
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: homebox-data
+              mountPath: /data
+      containers:
+        - name: homebox
+          image: ghcr.io/sysadminsmedia/homebox:latest-rootless
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 7745
+              protocol: TCP
+          env:
+            - name: TZ
+              value: "America/New_York"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7745
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7745
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: homebox-data
+              mountPath: /data
+      volumes:
+        - name: homebox-data
+          emptyDir: {}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homebox
+  namespace: homebox
+  labels:
+    app: homebox
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 7745
+      protocol: TCP
+      name: http
+  selector:
+    app: homebox

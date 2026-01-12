@@ -55,6 +55,10 @@ data:
             href: https://homarr.apocalypso.xyz/
             description: Another homepage app, but for the arr ecosystem
             icon: homarr
+        - Homebox:
+            href: https://homebox.apocalypso.xyz/
+            description: A self-hosted home inventory app
+            icon: homebox
     - 🛠️ Ingrastructure Services:
         - Proxmox:
             href: https://proxmox.sdconrox.com/
