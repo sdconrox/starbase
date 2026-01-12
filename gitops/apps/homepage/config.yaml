@@ -27,21 +27,33 @@ data:
             description: Kubernetes Dashboard
         - ArgoCD:
             href: https://argocd.apocalypso.xyz/
-            description: ArgoCD
+            description: Continuous deployment
         - Grafana:
             href: https://grafana.apocalypso.xyz/
-            description: Grafana
+            description: Metrics and logging across the cluster
 
     - User Services:
         - IT Tools:
             href: https://it-tools.apocalypso.xyz/
-            description: IT Tools
+            description: An assortment of developer tools
+        - Drawi.io:
+            href: https://drawio.apocalypso.xyz/
+            description: Diagrams
 
     - Ingrastructure Services:
         - Proxmox:
             href: https://proxmox.sdconrox.com/
             description: Proxmox
   widgets.yaml: |
+    - resources:
+        backend: resources
+        expanded: true
+        cpu: true
+        memory: true
+        network: default
+    - search:
+        provider: duckduckgo
+        target: _blank
     - kubernetes:
         cluster:
           show: true
@@ -54,13 +66,4 @@ data:
           cpu: true
           memory: true
           showLabel: true
-    - resources:
-        backend: resources
-        expanded: true
-        cpu: true
-        memory: true
-        network: default
-    - search:
-        provider: duckduckgo
-        target: _blank
   docker.yaml: ""
