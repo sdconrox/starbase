@@ -51,6 +51,10 @@ data:
             href: https://pdf.apocalypso.xyz/
             description: Various PDF tools
             icon: stirling-pdf
+        - Homarr:
+            href: https://homarr.apocalypso.xyz/
+            description: Another homepage app, but for the arr ecosystem
+            icon: homarr
     - 🛠️ Ingrastructure Services:
         - Proxmox:
             href: https://proxmox.sdconrox.com/

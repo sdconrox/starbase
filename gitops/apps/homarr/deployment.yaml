@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: homarr
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homarr
+  namespace: homarr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homarr
+  namespace: homarr
+  labels:
+    app: homarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homarr
+  template:
+    metadata:
+      labels:
+        app: homarr
+    spec:
+      serviceAccountName: homarr
+      containers:
+        - name: homarr
+          image: ghcr.io/ajnart/homarr:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 7575
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "7575"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7575
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7575
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: homarr-data
+              mountPath: /app/data
+            - name: homarr-config
+              mountPath: /app/config
+      volumes:
+        - name: homarr-data
+          emptyDir: {}
+        - name: homarr-config
+          emptyDir: {}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homarr
+  namespace: homarr
+  labels:
+    app: homarr
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 7575
+      protocol: TCP
+      name: http
+  selector:
+    app: homarr
