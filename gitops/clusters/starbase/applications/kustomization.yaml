@@ -23,4 +23,4 @@ resources:
   - apps/stirling-pdf-application.yaml
   - apps/homarr-application.yaml
   - apps/homebox-application.yaml
-  - apps/calibre-application.yaml
+  # - apps/calibre-application.yaml
