@@ -59,6 +59,10 @@ data:
             href: https://homebox.apocalypso.xyz/
             description: A self-hosted home inventory app
             icon: homebox
+        - Calibre:
+            href: https://calibre.apocalypso.xyz/
+            description: A self-hosted ebook library
+            icon: calibre
     - 🛠️ Ingrastructure Services:
         - Proxmox:
             href: https://proxmox.sdconrox.com/
