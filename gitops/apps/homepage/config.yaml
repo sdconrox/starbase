@@ -21,7 +21,7 @@ data:
             - abbr: GH
               href: https://github.com/
   services.yaml: |
-    - Platform Services:
+    - 🧰 Platform Services:
         - Kubernetes Dashboard:
             href: https://dashboard.apocalypso.xyz/
             description: Kubernetes Dashboard
@@ -34,7 +34,7 @@ data:
             href: https://grafana.apocalypso.xyz/
             description: Metrics and logging across the cluster
             icon: grafana
-    - User Services:
+    - 🏠 User Services:
         - IT Tools:
             href: https://it-tools.apocalypso.xyz/
             description: An assortment of developer tools
@@ -47,21 +47,25 @@ data:
             href: https://openspeedtest.apocalypso.xyz/
             description: Test your internet speed
             icon: speedtest
-    - Ingrastructure Services:
+        - Open Stirling PDF:
+            href: https://pdf.apocalypso.xyz/
+            description: Various PDF tools
+            icon: stirling-pdf
+    - 🛠️ Ingrastructure Services:
         - Proxmox:
             href: https://proxmox.sdconrox.com/
             description: Proxmox
             icon: proxmox
   widgets.yaml: |
+    - search:
+        provider: google
+        target: _blank
     - resources:
         backend: resources
         expanded: true
         cpu: true
         memory: true
         network: default
-    - search:
-        provider: duckduckgo
-        target: _blank
     - kubernetes:
         cluster:
           show: true

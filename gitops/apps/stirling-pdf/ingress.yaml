@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stirling-pdf
+  namespace: stirling-pdf
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    external-dns.alpha.kubernetes.io/controller: "false"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - pdf.apocalypso.xyz
+      secretName: stirling-pdf-tls
+  rules:
+    - host: pdf.apocalypso.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stirling-pdf
+                port:
+                  number: 80

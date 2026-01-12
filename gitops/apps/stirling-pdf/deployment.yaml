@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stirling-pdf
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: stirling-pdf
+  namespace: stirling-pdf
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stirling-pdf
+  namespace: stirling-pdf
+  labels:
+    app: stirling-pdf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stirling-pdf
+  template:
+    metadata:
+      labels:
+        app: stirling-pdf
+    spec:
+      serviceAccountName: stirling-pdf
+      containers:
+        - name: stirling-pdf
+          image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: configs
+              mountPath: /configs
+            - name: logs
+              mountPath: /logs
+            - name: custom-files
+              mountPath: /customFiles
+            - name: tessdata
+              mountPath: /usr/share/tessdata
+      volumes:
+        - name: configs
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+        - name: custom-files
+          emptyDir: {}
+        - name: tessdata
+          emptyDir: {}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stirling-pdf
+  namespace: stirling-pdf
+  labels:
+    app: stirling-pdf
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: stirling-pdf
