@@ -17,3 +17,4 @@ resources:
   - platform/velero-schedule-application.yaml
   - apps/kubernetes-dashboard-application.yaml
   - apps/it-tools-application.yaml
+  - apps/homepage-application.yaml
