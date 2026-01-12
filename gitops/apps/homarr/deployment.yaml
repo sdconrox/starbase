@@ -27,6 +27,22 @@ spec:
         app: homarr
     spec:
       serviceAccountName: homarr
+      initContainers:
+        - name: init-permissions
+          image: busybox:latest
+          command: ['sh', '-c']
+          args:
+            - |
+              mkdir -p /app/data /app/config
+              chown -R 1000:1000 /app/data /app/config
+              chmod -R 755 /app/data /app/config
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: homarr-data
+              mountPath: /app/data
+            - name: homarr-config
+              mountPath: /app/config
       containers:
         - name: homarr
           image: ghcr.io/ajnart/homarr:latest
