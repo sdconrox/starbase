@@ -18,3 +18,4 @@ resources:
   - apps/kubernetes-dashboard-application.yaml
   - apps/it-tools-application.yaml
   - apps/homepage-application.yaml
+  - apps/drawio-application.yaml
