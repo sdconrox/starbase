@@ -22,7 +22,6 @@ spec:
                 key: credential
         domainFilters:
           - apocalypso.xyz
-        annotationFilter: "external-dns.alpha.kubernetes.io/exclude!=true"
         txtOwnerId: starbase
         policy: sync
         sources:
