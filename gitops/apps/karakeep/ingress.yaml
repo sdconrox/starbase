@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: karakeep
+  namespace: karakeep
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    external-dns.alpha.kubernetes.io/controller: "false"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - karakeep.apocalypso.xyz
+      secretName: karakeep-tls
+  rules:
+    - host: karakeep.apocalypso.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: karakeep
+                port:
+                  number: 80

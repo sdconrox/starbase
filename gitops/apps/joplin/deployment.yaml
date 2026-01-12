@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: joplin
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: joplin
+  namespace: joplin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: joplin
+  namespace: joplin
+  labels:
+    app: joplin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: joplin
+  template:
+    metadata:
+      labels:
+        app: joplin
+    spec:
+      serviceAccountName: joplin
+      containers:
+        - name: joplin
+          image: joplin/server:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 22300
+              protocol: TCP
+          env:
+            - name: APP_BASE_URL
+              value: "https://joplin.apocalypso.xyz"
+            - name: DB_CLIENT
+              value: "sqlite3"
+            - name: POSTGRES_DATABASE
+              value: "joplin"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /api/ping
+              port: 22300
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/ping
+              port: 22300
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: joplin-data
+              mountPath: /home/joplin
+      volumes:
+        - name: joplin-data
+          emptyDir: {}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: joplin
+  namespace: joplin
+  labels:
+    app: joplin
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 22300
+      protocol: TCP
+      name: http
+  selector:
+    app: joplin

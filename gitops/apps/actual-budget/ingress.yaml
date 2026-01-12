@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: actual-budget
+  namespace: actual-budget
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    external-dns.alpha.kubernetes.io/controller: "false"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - budget.apocalypso.xyz
+      secretName: actual-budget-tls
+  rules:
+    - host: budget.apocalypso.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: actual-budget
+                port:
+                  number: 80

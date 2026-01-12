@@ -23,3 +23,11 @@ resources:
   - apps/stirling-pdf-application.yaml
   - apps/homarr-application.yaml
   - apps/homebox-application.yaml
+  - apps/vikunja-application.yaml
+  - apps/planka-application.yaml
+  - apps/freshrss-application.yaml
+  - apps/joplin-application.yaml
+  - apps/actual-budget-application.yaml
+  - apps/mealie-application.yaml
+  - apps/octoprint-application.yaml
+  - apps/karakeep-application.yaml

@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vikunja
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vikunja
+  namespace: vikunja
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vikunja
+  namespace: vikunja
+  labels:
+    app: vikunja
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vikunja
+  template:
+    metadata:
+      labels:
+        app: vikunja
+    spec:
+      serviceAccountName: vikunja
+      containers:
+        - name: vikunja
+          image: vikunja/vikunja:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3456
+              protocol: TCP
+          env:
+            - name: TZ
+              value: "America/New_York"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: 3456
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: 3456
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: vikunja-data
+              mountPath: /app/vikunja
+      volumes:
+        - name: vikunja-data
+          emptyDir: {}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vikunja
+  namespace: vikunja
+  labels:
+    app: vikunja
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 3456
+      protocol: TCP
+      name: http
+  selector:
+    app: vikunja
