@@ -5,7 +5,8 @@
 # Control plane node (master) - Proxmox VM
 # This will be populated automatically by Terraform
 # Run: bash bin/update-inventory-from-terraform.sh after terraform apply
-k8s-master ansible_host=10.60.0.198
+k8s-master-primary ansible_host=10.60.0.48
+# k8s-master-aux-1   ansible_host=10.60.0.121
 
 # Worker nodes (Raspberry Pi 4)
 servitor-i      ansible_host=10.60.0.78
@@ -20,10 +21,12 @@ servitor-viii   ansible_host=10.60.0.150
 servitor-x      ansible_host=10.60.0.231
 
 [proxmox]
-k8s-master
+k8s-master-primary
+# k8s-master-aux-1
 
 [control_plane]
-k8s-master
+k8s-master-primary
+# k8s-master-aux-1
 
 [workers]
 servitor-i
