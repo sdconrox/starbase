@@ -2,8 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - platform/metallb-application.yaml
-  # - platform/onepassword-connect-application.yaml
-  # - platform/onepassword-secrets-application.yaml
+  - platform/onepassword-connect-application.yaml
+  - platform/onepassword-secrets-application.yaml
   # - platform/cert-manager-application.yaml
   # - platform/cert-manager-issuers-application.yaml
   # - platform/ingress-nginx-application.yaml
