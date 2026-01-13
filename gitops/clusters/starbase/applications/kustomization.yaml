@@ -4,8 +4,8 @@ resources:
   - platform/metallb-application.yaml
   - platform/onepassword-connect-application.yaml
   - platform/onepassword-secrets-application.yaml
-  # - platform/cert-manager-application.yaml
-  # - platform/cert-manager-issuers-application.yaml
+  - platform/cert-manager-application.yaml
+  - platform/cert-manager-issuers-application.yaml
   # - platform/ingress-nginx-application.yaml
   # - platform/external-dns-application.yaml
   # - platform/cloudflared-application.yaml
