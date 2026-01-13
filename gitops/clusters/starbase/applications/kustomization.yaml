@@ -2,21 +2,22 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - platform/metallb-application.yaml
-  - platform/onepassword-connect-application.yaml
-  - platform/onepassword-secrets-application.yaml
-  - platform/cert-manager-application.yaml
-  - platform/cert-manager-issuers-application.yaml
-  - platform/ingress-nginx-application.yaml
-  - platform/external-dns-application.yaml
-  - platform/cloudflared-application.yaml
-  - platform/kube-prometheus-stack-application.yaml
-  - platform/loki-application.yaml
-  - platform/promtail-application.yaml
-  - platform/nfs-provisioner-application.yaml
-  - platform/velero-application.yaml
-  - platform/velero-schedule-application.yaml
-  - apps/kubernetes-dashboard-application.yaml
-  - apps/it-tools-application.yaml
+  # - platform/onepassword-connect-application.yaml
+  # - platform/onepassword-secrets-application.yaml
+  # - platform/cert-manager-application.yaml
+  # - platform/cert-manager-issuers-application.yaml
+  # - platform/ingress-nginx-application.yaml
+  # - platform/external-dns-application.yaml
+  # - platform/cloudflared-application.yaml
+  # - platform/kube-prometheus-stack-application.yaml
+  # - platform/loki-application.yaml
+  # - platform/promtail-application.yaml
+  # - platform/nfs-provisioner-application.yaml
+  # - platform/velero-application.yaml
+  # - platform/velero-schedule-application.yaml
+  # - apps/kubernetes-dashboard-application.yaml
+  # - apps/it-tools-application.yaml
+
   # - apps/homepage-application.yaml
   # - apps/drawio-application.yaml
   # - apps/openspeedtest-application.yaml
