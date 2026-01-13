@@ -4,4 +4,4 @@ resources:
   - deployment.yaml
   - ingress.yaml
   - postgresql.yaml
-  - joplin-postgres-credentials.yaml
+  - joplin-postgres-secret.yaml
