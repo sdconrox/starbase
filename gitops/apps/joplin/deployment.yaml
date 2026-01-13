@@ -59,6 +59,8 @@ spec:
                 secretKeyRef:
                   name: joplin-postgres-credentials
                   key: password
+            - name: PM2_HOME
+              value: "/home/joplin/.pm2"
           resources:
             requests:
               memory: "512Mi"
