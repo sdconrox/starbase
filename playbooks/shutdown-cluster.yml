@@ -1,0 +1,12 @@
+---
+- name: Shutdown Kubernetes Cluster
+  hosts: raspberry_pi_cluster
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Shutdown all nodes
+      command: /sbin/shutdown -h now
+      async: 1
+      poll: 0
+      ignore_errors: yes
