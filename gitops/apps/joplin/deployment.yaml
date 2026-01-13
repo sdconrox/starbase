@@ -27,6 +27,19 @@ spec:
         app: joplin
     spec:
       serviceAccountName: joplin
+      initContainers:
+        - name: init-pm2-dir
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /home/joplin/.pm2
+              chown -R 1000:1000 /home/joplin
+              chmod -R 755 /home/joplin
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
       containers:
         - name: joplin
           image: joplin/server:latest
