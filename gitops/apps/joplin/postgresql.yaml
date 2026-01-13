@@ -1,50 +1,43 @@
 apiVersion: v1
-kind: Namespace
+kind: PersistentVolumeClaim
 metadata:
-  name: joplin
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: joplin
+  name: joplin-postgres-data
   namespace: joplin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 10Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: joplin
+  name: joplin-postgres
   namespace: joplin
   labels:
-    app: joplin
+    app: joplin-postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: joplin
+      app: joplin-postgres
   template:
     metadata:
       labels:
-        app: joplin
+        app: joplin-postgres
     spec:
-      serviceAccountName: joplin
       containers:
-        - name: joplin
-          image: joplin/server:latest
-          imagePullPolicy: Always
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
           ports:
-            - name: http
-              containerPort: 22300
+            - name: postgres
+              containerPort: 5432
               protocol: TCP
           env:
-            - name: APP_BASE_URL
-              value: "https://joplin.apocalypso.xyz"
-            - name: DB_CLIENT
-              value: "pg"
-            - name: POSTGRES_HOST
-              value: "joplin-postgres"
-            - name: POSTGRES_PORT
-              value: "5432"
-            - name: POSTGRES_DATABASE
+            - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
                   name: joplin-postgres-credentials
@@ -59,37 +52,50 @@ spec:
                 secretKeyRef:
                   name: joplin-postgres-credentials
                   key: password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           resources:
             requests:
-              memory: "512Mi"
+              memory: "256Mi"
               cpu: "200m"
             limits:
-              memory: "1Gi"
-              cpu: "1000m"
+              memory: "512Mi"
+              cpu: "500m"
           livenessProbe:
-            httpGet:
-              path: /api/ping
-              port: 22300
-            initialDelaySeconds: 60
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
           readinessProbe:
-            httpGet:
-              path: /api/ping
-              port: 22300
-            initialDelaySeconds: 30
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+            initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 3
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
             runAsNonRoot: true
-            runAsUser: 1000
+            runAsUser: 999
             capabilities:
               drop:
                 - ALL
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: joplin-postgres-data
       securityContext:
         seccompProfile:
           type: RuntimeDefault
@@ -97,16 +103,16 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: joplin
+  name: joplin-postgres
   namespace: joplin
   labels:
-    app: joplin
+    app: joplin-postgres
 spec:
   type: ClusterIP
   ports:
-    - port: 80
-      targetPort: 22300
+    - port: 5432
+      targetPort: 5432
       protocol: TCP
-      name: http
+      name: postgres
   selector:
-    app: joplin
+    app: joplin-postgres
