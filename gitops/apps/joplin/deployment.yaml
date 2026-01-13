@@ -64,6 +64,8 @@ spec:
           volumeMounts:
             - name: pm2-home
               mountPath: /tmp/pm2
+            - name: joplin-logs
+              mountPath: /home/joplin/packages/server/logs
           resources:
             requests:
               memory: "512Mi"
@@ -97,6 +99,8 @@ spec:
                 - ALL
       volumes:
         - name: pm2-home
+          emptyDir: {}
+        - name: joplin-logs
           emptyDir: {}
       securityContext:
         seccompProfile:
