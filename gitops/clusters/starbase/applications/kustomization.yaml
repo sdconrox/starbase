@@ -15,15 +15,16 @@ resources:
   - platform/nfs-provisioner-application.yaml
   - platform/velero-application.yaml
   - platform/velero-schedule-application.yaml
-  # - apps/kubernetes-dashboard-application.yaml
   # - apps/it-tools-application.yaml
 
   # - apps/homepage-application.yaml
   # - apps/drawio-application.yaml
   # - apps/openspeedtest-application.yaml
-  # - apps/stirling-pdf-application.yaml
   # - apps/homarr-application.yaml
   # - apps/homebox-application.yaml
+
+  # - apps/stirling-pdf-application.yaml
+
   # - apps/actual-budget-application.yaml
   # - apps/vikunja-application.yaml
   # - apps/planka-application.yaml

@@ -4,6 +4,7 @@
 crds:
   install: true
 configs:
+  # Apply the insecure flag once cloudflared is installed
   # params:
   #   server.insecure: true
   # Reduce application controller polling to reduce etcd load
