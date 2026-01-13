@@ -22,10 +22,10 @@ resources:
   - apps/homarr-application.yaml
   - apps/homebox-application.yaml
   - apps/stirling-pdf-application.yaml
+  - apps/actual-budget-application.yaml
 
 
 
-  # - apps/actual-budget-application.yaml
   # - apps/vikunja-application.yaml
   # - apps/planka-application.yaml
   # - apps/freshrss-application.yaml
