@@ -3,18 +3,30 @@ set -euo pipefail
 
 NAMESPACE="argocd"
 
-kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace "$NAMESPACE"
 
-helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 || true
-helm repo update >/dev/null
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
 
-cat > gitops/clusters/starbase/argocd/install/values.yaml <<'YAML'
-# Keep this minimal; we can tune later
-
-# Install CRDs with the chart (recommended for Helm installs)
-crds:
-  install: true
-YAML
+# cat > gitops/clusters/starbase/argocd/install/values.yaml <<'YAML'
+# # Install CRDs with the chart (recommended for Helm installs)
+# crds:
+#   install: true
+# configs:
+#   params:
+#     server.insecure: true
+#   # Reduce application controller polling to reduce etcd load
+#   controller.application.resync: 300  # Default is 180 (3 min), increase to 300 (5 min)
+#   controller.hardResyncPeriod: 24h    # Hard resync period (default is 0, meaning disabled)
+#   controller.replicas: 1               # Ensure only 1 controller instance
+# controller:
+#   # Reduce concurrent operations to prevent overwhelming etcd
+#   operationProcessors: 10              # Default is 10, reduce if needed
+#   statusProcessors: 20                # Default is 20, reduce if needed
+#   # Increase timeout for slow etcd responses
+#   timeout:
+#     applicationResyncPeriod: 300      # 5 minutes
+# YAML
 
 helm upgrade --install argocd argo/argo-cd \
   -n "$NAMESPACE" \
@@ -47,29 +59,29 @@ helm upgrade --install argocd argo/argo-cd \
 
 # (You should delete the initial secret afterwards as suggested by the Getting Started Guide: https://argo-cd.readthedocs.io/en/stable/getting_started/#4-login-using-the-cli)
 
-cat > gitops/clusters/starbase/argocd/install/bootstrap-applications.yaml <<'YAML'
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: starbase-applications
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "-100"
-spec:
-  project: default
-  source:
-    repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
-    targetRevision: HEAD
-    path: gitops/clusters/starbase/applications
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-YAML
+# cat > gitops/clusters/starbase/argocd/install/bootstrap-applications.yaml <<'YAML'
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: starbase-applications
+#   namespace: argocd
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "-100"
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
+#     targetRevision: HEAD
+#     path: gitops/clusters/starbase/applications
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: argocd
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+#     syncOptions:
+#       - CreateNamespace=true
+# YAML
 
 kubectl apply -f gitops/clusters/starbase/argocd/install/bootstrap-applications.yaml
