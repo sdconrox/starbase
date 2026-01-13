@@ -9,6 +9,19 @@ metadata:
   name: joplin
   namespace: joplin
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: joplin-data
+  namespace: joplin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -47,7 +60,7 @@ spec:
               memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "2Gi"
+              memory: "1Gi"
               cpu: "1000m"
           livenessProbe:
             httpGet:
@@ -78,7 +91,8 @@ spec:
               mountPath: /home/joplin
       volumes:
         - name: joplin-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: joplin-data
       securityContext:
         seccompProfile:
           type: RuntimeDefault
