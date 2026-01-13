@@ -17,9 +17,9 @@ resources:
   - platform/velero-schedule-application.yaml
   - apps/homepage-application.yaml
   - apps/it-tools-application.yaml
+  - apps/drawio-application.yaml
+  - apps/openspeedtest-application.yaml
 
-  # - apps/drawio-application.yaml
-  # - apps/openspeedtest-application.yaml
   # - apps/homarr-application.yaml
   # - apps/homebox-application.yaml
 
