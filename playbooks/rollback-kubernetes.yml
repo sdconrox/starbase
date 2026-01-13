@@ -7,7 +7,7 @@
 
   vars:
     # Master node configuration
-    master_node: "k8s-master"
+    master_node: "k8s-master-primary"
 
   tasks:
     - name: Display rollback warning
