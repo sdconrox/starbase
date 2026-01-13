@@ -33,14 +33,26 @@ variable "proxmox_debug" {
   default     = false
 }
 
-variable "vm_hostname" {
+variable "vm_hostname_master" {
   description = "Hostname for the VM"
   type        = string
   default     = "k8s-master"
 }
 
+variable "vm_hostname_master_aux" {
+  description = "Hostname for the VM"
+  type        = string
+  default     = "k8s-master-aux-1"
+}
+
 variable "vm_id" {
   description = "VM ID in Proxmox (auto-increment if not specified)"
+  type        = number
+  default     = null
+}
+
+variable "vm_id_secondary" {
+  description = "VM ID for secondary master in Proxmox"
   type        = number
   default     = null
 }

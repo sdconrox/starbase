@@ -11,10 +11,10 @@ proxmox_tls_insecure     = false  # Set to true if using self-signed certs
 # VM Configuration
 vm_hostname    = "k8s-master"
 vm_id          = null  # Leave null for auto-increment
-vm_cores       = 4
+vm_cores       = 8
 vm_sockets     = 2
-vm_memory      = 4096  # MB
-vm_disk_size   = "32"
+vm_memory      = 32768  # MB
+vm_disk_size   = "256"
 vm_storage_pool = "local-zfs"
 
 # Network Configuration
@@ -24,4 +24,4 @@ vm_network_bridge = "vmbr0"
 vm_template_name = "ubuntu-22.04-cloudinit"  # Update to match your template
 
 # User Configuration
-vm_user          = "ubuntu"
+vm_user          = "sdconrox"

@@ -15,7 +15,7 @@ output "vm_user" {
 
 output "ansible_inventory_entry_template" {
   description = "Ansible inventory entry template (replace <IP> with actual IP from DHCP)"
-  value       = "${var.vm_hostname} ansible_host=<IP> ansible_user=${var.vm_user}"
+  value       = "${var.vm_hostname_master} ansible_host=<IP> ansible_user=${var.vm_user}"
 }
 
 output "ssh_command_template" {
