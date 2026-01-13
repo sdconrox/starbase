@@ -103,6 +103,11 @@ spec:
             httpGet:
               path: /api/ping
               port: 22300
+              httpHeaders:
+                - name: Host
+                  value: joplin.apocalypso.xyz
+                - name: Origin
+                  value: https://joplin.apocalypso.xyz
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
@@ -111,6 +116,11 @@ spec:
             httpGet:
               path: /api/ping
               port: 22300
+              httpHeaders:
+                - name: Host
+                  value: joplin.apocalypso.xyz
+                - name: Origin
+                  value: https://joplin.apocalypso.xyz
             initialDelaySeconds: 30
             periodSeconds: 5
             timeoutSeconds: 3
