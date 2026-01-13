@@ -40,20 +40,6 @@ spec:
         app: homebox
     spec:
       serviceAccountName: homebox
-      initContainers:
-        - name: init-permissions
-          image: busybox:latest
-          command: ['sh', '-c']
-          args:
-            - |
-              mkdir -p /data
-              chown -R 65532:65532 /data
-              chmod -R 755 /data
-          securityContext:
-            runAsUser: 0
-          volumeMounts:
-            - name: homebox-data
-              mountPath: /data
       containers:
         - name: homebox
           image: ghcr.io/sysadminsmedia/homebox:latest-rootless
