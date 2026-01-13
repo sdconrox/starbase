@@ -4,8 +4,8 @@
 crds:
   install: true
 configs:
-  params:
-    server.insecure: true
+  # params:
+  #   server.insecure: true
   # Reduce application controller polling to reduce etcd load
   controller.application.resync: 300  # Default is 180 (3 min), increase to 300 (5 min)
   controller.hardResyncPeriod: 24h    # Hard resync period (default is 0, meaning disabled)
