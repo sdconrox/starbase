@@ -9,6 +9,19 @@ metadata:
   name: actual-budget
   namespace: actual-budget
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: actual-budget-data
+  namespace: actual-budget
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -74,7 +87,8 @@ spec:
               mountPath: /data
       volumes:
         - name: actual-budget-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: actual-budget-data
       securityContext:
         seccompProfile:
           type: RuntimeDefault
