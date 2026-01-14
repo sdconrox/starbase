@@ -18,7 +18,7 @@ data:
     theme: dark
     color: neutral
     cardBlur: xs # xs, md, etc... see https://tailwindcss.com/docs/backdrop-blur
-    headerStyle: boxed
+    headerStyle: boxedWidgets
     providers:
         openweathermap: ${OPENWEATHERMAP_API_KEY}
         finnhub: ${FINNHUB_API_KEY}
@@ -38,6 +38,33 @@ data:
         Cloud:
             style: row
             columns: 4
+        developer:
+            style: row
+            columns: 5
+        social:
+            style: row
+            columns: 6
+        mail:
+            style: row
+            columns: 2
+        security:
+            style: row
+            columns: 2
+        reference:
+            style: row
+            columns: 3
+        freelancing:
+            style: row
+            columns: 3
+        entertainment:
+            style: row
+            columns: 2
+        banking:
+            style: row
+            columns: 2
+        shopping:
+            style: row
+            columns: 2
   custom.css: ""
   custom.js: ""
   bookmarks.yaml: |
@@ -217,76 +244,6 @@ data:
             - icon: /icons/l1.png
               href: https://forum.level1techs.com/
   services.yaml: |
-    - 🧰 Platform Services:
-        - Kubernetes Dashboard:
-            href: https://dashboard.apocalypso.xyz/
-            description: Kubernetes Dashboard
-            icon: kubernetes
-        - ArgoCD:
-            href: https://argocd.apocalypso.xyz/
-            description: Continuous deployment
-            icon: argo-cd
-        - Grafana:
-            href: https://grafana.apocalypso.xyz/
-            description: Metrics and logging across the cluster
-            icon: grafana
-    - 🏠 User Services:
-        - IT Tools:
-            href: https://it-tools.apocalypso.xyz/
-            description: An assortment of developer tools
-            icon: it-tools
-        - Draw.io:
-            href: https://drawio.apocalypso.xyz/
-            description: Diagrams
-            icon: draw-io
-        - Open Speed Test:
-            href: https://openspeedtest.apocalypso.xyz/
-            description: Test your internet speed
-            icon: openspeedtest
-        - Open Stirling PDF:
-            href: https://pdf.apocalypso.xyz/
-            description: Various PDF tools
-            icon: stirling-pdf
-        - Homebox:
-            href: https://homebox.apocalypso.xyz/
-            description: A self-hosted home inventory app
-            icon: homebox
-        - Joplin:
-            href: https://joplin.apocalypso.xyz/
-            description: A self-hosted note-taking app
-            icon: joplin
-        - Actual Budget:
-            href: https://actualbudget.apocalypso.xyz/
-            description: A self-hosted budget app
-            icon: actual-budget
-        - Planka:
-            href: https://planka.apocalypso.xyz/
-            description: A self-hosted project management app
-            icon: planka
-        - Vikunja:
-            href: https://vikunja.apocalypso.xyz/
-            description: A self-hosted task management app
-            icon: vikunja
-        - FreshRSS:
-            href: https://freshrss.apocalypso.xyz/
-            description: A self-hosted RSS reader app
-            icon: freshrss
-        - Mealie:
-            href: https://mealie.apocalypso.xyz/
-            description: A self-hosted meal planning app
-            icon: mealie
-        - OctoPrint:
-            href: https://octoprint.apocalypso.xyz/
-            description: A self-hosted 3D printing app
-            icon: octoprint
-        - Karakeep:
-            href: https://karakeep.apocalypso.xyz/
-            description: A self-hosted password manager app
-            icon: karakeep
-        - Homarr:
-            href: https://homarr.apocalypso.xyz/
-            description: Another homepage app, but for the arr ecosystem
-            icon: homarr
     - 🛠️ Infrastructure Services:
         - Cloudflare:
             href: https://www.cloudflare.com/
@@ -312,7 +269,98 @@ data:
             href: https://truenas.sdconrox.com/
             description: TrueNAS SCALE
             icon: truenas
+    - 🧰 Platform Services:
+        - ArgoCD:
+            href: https://argocd.apocalypso.xyz/
+            description: Continuous deployment
+            icon: argo-cd
+            ping: argocd.apocalypso.xyz
+        - Grafana:
+            href: https://grafana.apocalypso.xyz/
+            description: Metrics and logging across the cluster
+            icon: grafana
+            ping: grafana.apocalypso.xyz
+    - 🏠 User Services:
+        - IT Tools:
+            href: https://it-tools.apocalypso.xyz/
+            description: An assortment of developer tools
+            icon: it-tools
+            ping: it-tools.apocalypso.xyz
+        - Draw.io:
+            href: https://drawio.apocalypso.xyz/
+            description: Diagrams
+            icon: draw-io
+            ping: drawio.apocalypso.xyz
+        - Open Speed Test:
+            href: https://openspeedtest.apocalypso.xyz/
+            description: Test your internet speed
+            icon: openspeedtest
+            ping: openspeedtest.apocalypso.xyz
+        - Open Stirling PDF:
+            href: https://pdf.apocalypso.xyz/
+            description: Various PDF tools
+            icon: stirling-pdf
+            ping: pdf.apocalypso.xyz
+        - Homebox:
+            href: https://homebox.apocalypso.xyz/
+            description: A self-hosted home inventory app
+            icon: homebox
+            ping: homebox.apocalypso.xyz
+        - Joplin:
+            href: https://joplin.apocalypso.xyz/
+            description: A self-hosted note-taking app
+            icon: joplin
+            ping: joplin.apocalypso.xyz
+        - Actual Budget:
+            href: https://budget.apocalypso.xyz/
+            description: A self-hosted budget app
+            icon: actual-budget
+            ping: budget.apocalypso.xyz
+        - Planka:
+            href: https://planka.apocalypso.xyz/
+            description: A self-hosted project management app
+            icon: planka
+            ping: planka.apocalypso.xyz
+        - Vikunja:
+            href: https://vikunja.apocalypso.xyz/
+            description: A self-hosted task management app
+            icon: vikunja
+            ping: vikunja.apocalypso.xyz
+        - FreshRSS:
+            href: https://freshrss.apocalypso.xyz/
+            description: A self-hosted RSS reader app
+            icon: freshrss
+            ping: freshrss.apocalypso.xyz
+        - Mealie:
+            href: https://mealie.apocalypso.xyz/
+            description: A self-hosted meal planning app
+            icon: mealie
+            ping: mealie.apocalypso.xyz
+        - OctoPrint:
+            href: https://octoprint.apocalypso.xyz/
+            description: A self-hosted 3D printing app
+            icon: octoprint
+            ping: octoprint.apocalypso.xyz
+        - Karakeep:
+            href: https://karakeep.apocalypso.xyz/
+            description: A self-hosted password manager app
+            icon: karakeep
+            ping: karakeep.apocalypso.xyz
+        - Homarr:
+            href: https://homarr.apocalypso.xyz/
+            description: Another homepage app, but for the arr ecosystem
+            icon: homarr
+            ping: homarr.apocalypso.xyz
   widgets.yaml: |
+    - openweathermap:
+        label: Inwood
+        units: imperial # or metric
+        latitude: 39.364916
+        longitude: -78.006818
+        provider: openweathermap
+    - unifi_console:
+        url: https://underverse.sdconrox.com
+        key: ${UNIFI_API_KEY} # required if using API key instead of username/password
     - resources:
         backend: resources
         expanded: true
@@ -331,20 +379,6 @@ data:
           cpu: true
           memory: true
           showLabel: true
-    - unifi_console:
-        url: https://underverse.sdconrox.com
-        key: ${UNIFI_API_KEY} # required if using API key instead of username/password
-    - openweathermap:
-        label: Inwood
-        units: imperial # or metric
-        latitude: 39.364916
-        longitude: -78.006818
-        provider: openweathermap
-    - datetime:
-        text_size: xl
-        format:
-          dateStyle: long
-          timeStyle: long
     - stocks:
         provider: finnhub
         color: true # optional, defaults to true
@@ -353,16 +387,12 @@ data:
           - DJIA
           - NDAQ
           - AAPL
-          # - SPX
-          # - GME
-          # - AMC
-          # - NVDA
-          # - AMD
-          # - TSM
-          # - MSFT
-          # - BRK.A
+          - NVDA
+          - MSFT
+          - TSM
+    - datetime:
+        text_size: xl
+        format:
+          dateStyle: long
+          timeStyle: long
   docker.yaml: ""
-  #settings.yaml: |
-  #  providers:
-  #    longhorn:
-  #      url: https://longhorn.my.network
