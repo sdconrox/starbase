@@ -22,15 +22,21 @@ data:
         openweathermap: ${OPENWEATHERMAP_API_KEY}
         finnhub: ${FINNHUB_API_KEY}
     layout:
-        Platform Services:
+        🧰 Platform Services:
             style: row
             columns: 3
-        User Services:
+        🏠 User Services:
             style: row
             columns: 5
-        Ingrastructure Services:
+        🛠️ Infrastructure Services:
             style: row
             columns: 3
+        LoFi Girl:
+            style: row
+            columns: 3
+        Cloud:
+            style: row
+            columns: 4
   custom.css: ""
   custom.js: ""
   bookmarks.yaml: |
@@ -284,7 +290,7 @@ data:
             href: https://karakeep.apocalypso.xyz/
             description: A self-hosted password manager app
             icon: karakeep
-    - 🛠️ Ingrastructure Services:
+    - 🛠️ Infrastructure Services:
         - Proxmox:
             href: https://proxmox.sdconrox.com/
             description: Proxmox
