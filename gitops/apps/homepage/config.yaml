@@ -11,6 +11,26 @@ data:
   settings.yaml: |
     title: Starbase
     description: 🖖🏻 Live Long and Prosper
+    background:
+        image: https://www.deviantart.com/celestin0/art/Starbase-Yorktown-1208704173
+        opacity: 25
+    theme: dark
+    color: neutral
+    cardBlur: xs # xs, md, etc... see https://tailwindcss.com/docs/backdrop-blur
+    headerStyle: boxed
+    providers:
+        openweathermap: ${OPENWEATHERMAP_API_KEY}
+        finnhub: ${FINNHUB_API_KEY}
+    layout:
+        Platform Services:
+            style: row
+            columns: 3
+        User Services:
+            style: row
+            columns: 5
+        Ingrastructure Services:
+            style: row
+            columns: 3
   custom.css: ""
   custom.js: ""
   bookmarks.yaml: |
