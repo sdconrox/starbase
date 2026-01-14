@@ -11,16 +11,6 @@ data:
   settings.yaml: |
     title: Starbase
     description: 🖖🏻 Live Long and Prosper
-    background:
-        image: https://www.deviantart.com/celestin0/art/Starbase-Yorktown-1208704173
-        opacity: 25
-    theme: dark
-    color: neutral
-    cardBlur: xs # xs, md, etc... see https://tailwindcss.com/docs/backdrop-blur
-    headerStyle: boxed
-    providers:
-        openweathermap: ${OPENWEATHERMAP_API_KEY}
-        finnhub: ${FINNHUB_API_KEY}
     layout:
         Platform Services:
             style: row
@@ -34,6 +24,98 @@ data:
   custom.css: ""
   custom.js: ""
   bookmarks.yaml: ""
+  services.yaml: |
+    - 🧰 Platform Services:
+        - Kubernetes Dashboard:
+            href: https://dashboard.apocalypso.xyz/
+            description: Kubernetes Dashboard
+            icon: kubernetes
+        - ArgoCD:
+            href: https://argocd.apocalypso.xyz/
+            description: Continuous deployment
+            icon: argo-cd
+        - Grafana:
+            href: https://grafana.apocalypso.xyz/
+            description: Metrics and logging across the cluster
+            icon: grafana
+    - 🏠 User Services:
+        - IT Tools:
+            href: https://it-tools.apocalypso.xyz/
+            description: An assortment of developer tools
+            icon: it-tools
+        - Draw.io:
+            href: https://drawio.apocalypso.xyz/
+            description: Diagrams
+            icon: draw-io
+        - Open Speed Test:
+            href: https://openspeedtest.apocalypso.xyz/
+            description: Test your internet speed
+            icon: openspeedtest
+        - Open Stirling PDF:
+            href: https://pdf.apocalypso.xyz/
+            description: Various PDF tools
+            icon: stirling-pdf
+        - Homarr:
+            href: https://homarr.apocalypso.xyz/
+            description: Another homepage app, but for the arr ecosystem
+            icon: homarr
+        - Homebox:
+            href: https://homebox.apocalypso.xyz/
+            description: A self-hosted home inventory app
+            icon: homebox
+        - Joplin:
+            href: https://joplin.apocalypso.xyz/
+            description: A self-hosted note-taking app
+            icon: joplin
+        - Actual Budget:
+            href: https://budget.apocalypso.xyz/
+            description: A self-hosted budget app
+            icon: actual-budget
+        - Planka:
+            href: https://planka.apocalypso.xyz/
+            description: A self-hosted project management app
+            icon: planka
+        - Vikunja:
+            href: https://vikunja.apocalypso.xyz/
+            description: A self-hosted task management app
+            icon: vikunja
+        - FreshRSS:
+            href: https://freshrss.apocalypso.xyz/
+            description: A self-hosted RSS reader app
+            icon: freshrss
+        - Mealie:
+            href: https://mealie.apocalypso.xyz/
+            description: A self-hosted meal planning app
+            icon: mealie
+        - OctoPrint:
+            href: https://octoprint.apocalypso.xyz/
+            description: A self-hosted 3D printing app
+            icon: octoprint
+        - Karakeep:
+            href: https://karakeep.apocalypso.xyz/
+            description: A self-hosted password manager app
+            icon: karakeep
+    - 🛠️ Ingrastructure Services:
+        - Cloudflare:
+            href: https://cloudflare.com/
+            description: DNS and Zero Trust
+            icon: cloudflare
+        - Namecheap:
+            - abbr: NC
+            icon: namecheap
+            href: https://namecheap.com/
+        - Unifi (Public):
+            href: https://unifi.ui.com/
+            description: Unifi Network Controller
+            icon: unifi
+        - Unifi (Private):
+            href: https://unifi.sdconrox.com/
+            description: Unifi Network Controller
+            icon: unifi
+        - Proxmox:
+            href: https://proxmox.sdconrox.com/
+            description: Proxmox
+            icon: proxmox
   widgets.yaml: |
     - search:
         provider: google
