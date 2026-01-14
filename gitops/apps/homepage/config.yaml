@@ -340,10 +340,6 @@ data:
         latitude: 39.364916
         longitude: -78.006818
         provider: openweathermap
-    - search:
-        provider: [google, duckduckgo]
-        showSearchSuggestions: true
-        target: _blank
     - datetime:
         text_size: xl
         format:
@@ -365,9 +361,6 @@ data:
           # - TSM
           # - MSFT
           # - BRK.A
-    - search:
-        provider: google
-        target: _blank
   docker.yaml: ""
   #settings.yaml: |
   #  providers:
