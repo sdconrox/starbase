@@ -375,7 +375,7 @@ data:
           showLabel: true
           label: "cluster"
         nodes:
-          show: false
+          show: true
           cpu: true
           memory: true
           showLabel: true
@@ -395,4 +395,9 @@ data:
         format:
           dateStyle: long
           timeStyle: long
+    - search:
+        provider: [google, duckduckgo]
+        focus: true
+        showSearchSuggestions: true
+        target: _blank
   docker.yaml: ""
