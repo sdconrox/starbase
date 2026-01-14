@@ -8,14 +8,215 @@ metadata:
 data:
   kubernetes.yaml: |
     mode: cluster
-  settings.yaml: ""
+  settings.yaml: |
+    title: Starbase
+    description: 🖖🏻 Live Long and Prosper
+    background:
+        image: https://www.deviantart.com/celestin0/art/Starbase-Yorktown-1208704173
+        opacity: 25
+    theme: dark
+    color: neutral
+    cardBlur: xs # xs, md, etc... see https://tailwindcss.com/docs/backdrop-blur
+    headerStyle: boxed
+    providers:
+        openweathermap: ${OPENWEATHERMAP_API_KEY}
+        finnhub: ${FINNHUB_API_KEY}
+    layout:
+        Platform Services:
+            style: row
+            columns: 3
+        User Services:
+            style: row
+            columns: 5
+        Ingrastructure Services:
+            style: row
+            columns: 3
   custom.css: ""
   custom.js: ""
   bookmarks.yaml: |
+    - LoFi Girl:
+        - OG:
+            - abbr: OG
+            icon: mdi-book
+            href: https://www.youtube.com/watch?v=jfKfPfyJRdk
+        - Synthwave:
+            - abbr: SW
+            icon: mdi-cosine-wave
+            href: https://www.youtube.com/watch?v=4xDzrJKXOOY
+        - Asian:
+            - abbr: A
+            icon: mdi-ideogram-cjk
+            href: https://www.youtube.com/watch?v=Na0w3Mz46GA
+
+    - Cloud:
+        - iCloud:
+            - icon: icloud.png
+            href: https://www.icloud.com/
+        - Apple:
+            - icon: apple.png
+            href: https://www.apple.com/
+        - Google:
+            - icon: google.png
+            href: https://www.google.com/
+        - Microsoft:
+            - icon: microsoft.png
+            href: https://www.microsoft.com/en-us/
+
+    - Entertainment:
+        - YouTube:
+            - abbr: YT
+            icon: youtube.png
+            href: https://youtube.com/
+        - Apple TV:
+            - icon: apple.png
+            href: https://tv.apple.com/
+        - Twitch:
+            - icon: twitch.png
+            href: https://www.twitch.tv/
+        - Xfinity Stream:
+            - icon: /icons/xfinity.ico
+            href: https://www.xfinity.com/stream/
+
+    - Banking:
+        - USAA:
+            - icon: si-money
+            href: https://usaa.com
+        - First Tech FCB:
+            - icon: si-money
+            href: https://firsttechfed.com
+
+    - Mail:
+        - Protonmail:
+            - icon: si-proton
+            href: https://mail.proton.me/u/0/inbox
+        - GMail:
+            - icon: gmail.png
+            href: https://mail.google.com/mail/u/0/#inbox
+        - Outlook:
+            - icon: sh-microsoft-outlook.png
+            href: https://outlook.live.com/mail/0/inbox
+        - iCloud Mail:
+            - icon: icloud.png
+            href: https://www.icloud.com/mail/
+
+    - Security:
+        - 1Password:
+            - icon: si-1password
+            href: https://my.1password.com/
+        - Yubico:
+            - icon: si-yubico
+            href: https://www.yubico.com/
+
+    - Reference:
+        - Wikipedia:
+            - icon: wikipedia.png
+            href: https://www.wikipedia.org/
+        - Raindrop:
+            - icon: /icons/raindrop.png
+            href: https://app.raindrop.io/
+        - ChatGPT:
+            - icon: openai.png
+            href: https://chatgpt.com/
+
+    - Freelancing:
+        - Task Rabbit:
+            - icon: /icons/taskrabbit.ico
+            href: https://www.taskrabbit.com/
+        - Up Work:
+            - icon: si-upwork
+            href: https://www.upwork.com/
+        - Fiverr:
+            - icon: si-fiverr
+            href: https://www.fiverr.com/
+
+    - Shopping:
+        - Gamers Nexus Store:
+            - icon: /icons/gamersnexus.ico
+            href: https://www.gamersnexus.net/
+        - LTT Store:
+            - icon: /icons/lttstore.png
+            href: https://www.lttstore.com/
     - Developer:
-        - Github:
+        - GitHub:
             - abbr: GH
-              href: https://github.com/
+            icon: github.png
+            href: https://github.com/
+        - GitLab:
+            - abbr: GL
+            icon: gitlab.png
+            href: https://gitlab.com/
+        - Docker:
+            - abbr: D
+            icon: docker.png
+            href: https://hub.docker.com/
+        - Vagrant:
+            - icon: sh-hashicorp-vagrant.svg
+            href: https://app.vagrantup.com/boxes/search
+        - Ansible:
+            - icon: ansible.png
+            href: https://galaxy.ansible.com/
+        - Artifact Hub:
+            - icon: si-artifacthub
+            href: https://artifacthub.io/
+        - Helm:
+            - icon: helm.png
+            href: https://helm.sh/
+        - Stack Overflow:
+            - icon: si-stackoverflow
+            href: https://stackoverflow.com/
+        - Packal:
+            - icon: /icons/packal.png
+            href: https://www.packal.org/
+        - Draw.io:
+            - icon: sh-draw-io.png
+            href: https://app.diagrams.net/
+        - Pictogrammers:
+            - icon: /icons/pictogrammers.png
+            href: https://pictogrammers.com/library/mdi/
+        - Simple Icons:
+            - icon: /icons/simpleicons.ico
+            href: https://simpleicons.org/
+        - Selfhosted Icons:
+            - icon: /icons/selfhosted.png
+            href: https://selfh.st/icons/
+    - Social:
+        - sdconrox.com:
+            - icon: si-aboutdotme
+            href: https://sdconrox.com/
+        - About Me:
+            - icon: si-aboutdotme
+            href: https://about.me/
+        - Reddit:
+            - icon: reddit.png
+            abbr: RE
+            href: https://reddit.com/
+        - Behance:
+            - icon: si-behance
+            href: https://www.behance.net/
+        - Deviant Art:
+            - icon: si-deviantart
+            href: https://www.deviantart.com/
+        - LinkedIn:
+            - icon: linkedin.png
+            href: https://www.linkedin.com/
+        - Imgur:
+            - icon: si-imgur
+            href: https://imgur.com/
+        - Bluesky:
+            - icon: bluesky.png
+            href: https://bsky.app/
+        - Twitter:
+            - icon: twitter.png
+            href: https://twitter.com/
+        - Instagram:
+            - icon: instagram.png
+            href: https://www.instagram.com/
+        - Facebook:
+            - icon: facebook.png
+            href: https://www.facebook.com/
+        - L1 Tech Forum:
+            - icon: /icons/l1.png
+            href: https://forum.level1techs.com/
   services.yaml: |
     - 🧰 Platform Services:
         - Kubernetes Dashboard:
@@ -60,7 +261,7 @@ data:
             description: A self-hosted note-taking app
             icon: joplin
         - Actual Budget:
-            href: https://actualbudget.apocalypso.xyz/
+            href: https://budget.apocalypso.xyz/
             description: A self-hosted budget app
             icon: actual-budget
         - Planka:
@@ -88,6 +289,22 @@ data:
             description: A self-hosted password manager app
             icon: karakeep
     - 🛠️ Ingrastructure Services:
+        - Cloudflare:
+            href: https://cloudflare.com/
+            description: DNS and Zero Trust
+            icon: cloudflare
+        - Namecheap:
+            - abbr: NC
+            icon: namecheap
+            href: https://namecheap.com/
+        - Unifi (Public):
+            href: https://unifi.ui.com/
+            description: Unifi Network Controller
+            icon: unifi
+        - Unifi (Private):
+            href: https://unifi.sdconrox.com/
+            description: Unifi Network Controller
+            icon: unifi
         - Proxmox:
             href: https://proxmox.sdconrox.com/
             description: Proxmox
@@ -108,14 +325,9 @@ data:
           cpu: true
           memory: true
           showLabel: true
-          label: "cluster"
+          label: "starbase"
         nodes:
-          show: true
+          show: false
           cpu: true
           memory: true
           showLabel: true
-  docker.yaml: ""
-  #settings.yaml: |
-  #  providers:
-  #    longhorn:
-  #      url: https://longhorn.my.network
