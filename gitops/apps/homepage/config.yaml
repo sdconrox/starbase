@@ -11,19 +11,13 @@ data:
   settings.yaml: |
     title: Starbase
     description: 🖖🏻 Live Long and Prosper
-    layout:
-        Platform Services:
-            style: row
-            columns: 3
-        User Services:
-            style: row
-            columns: 5
-        Ingrastructure Services:
-            style: row
-            columns: 3
   custom.css: ""
   custom.js: ""
-  bookmarks.yaml: ""
+  bookmarks.yaml: |
+    - Developer:
+        - Github:
+            - abbr: GH
+              href: https://github.com/
   services.yaml: |
     - 🧰 Platform Services:
         - Kubernetes Dashboard:
@@ -68,7 +62,7 @@ data:
             description: A self-hosted note-taking app
             icon: joplin
         - Actual Budget:
-            href: https://budget.apocalypso.xyz/
+            href: https://actualbudget.apocalypso.xyz/
             description: A self-hosted budget app
             icon: actual-budget
         - Planka:
@@ -96,22 +90,6 @@ data:
             description: A self-hosted password manager app
             icon: karakeep
     - 🛠️ Ingrastructure Services:
-        - Cloudflare:
-            href: https://cloudflare.com/
-            description: DNS and Zero Trust
-            icon: cloudflare
-        - Namecheap:
-            - abbr: NC
-            icon: namecheap
-            href: https://namecheap.com/
-        - Unifi (Public):
-            href: https://unifi.ui.com/
-            description: Unifi Network Controller
-            icon: unifi
-        - Unifi (Private):
-            href: https://unifi.sdconrox.com/
-            description: Unifi Network Controller
-            icon: unifi
         - Proxmox:
             href: https://proxmox.sdconrox.com/
             description: Proxmox
@@ -132,9 +110,14 @@ data:
           cpu: true
           memory: true
           showLabel: true
-          label: "starbase"
+          label: "cluster"
         nodes:
-          show: false
+          show: true
           cpu: true
           memory: true
           showLabel: true
+  docker.yaml: ""
+  #settings.yaml: |
+  #  providers:
+  #    longhorn:
+  #      url: https://longhorn.my.network
