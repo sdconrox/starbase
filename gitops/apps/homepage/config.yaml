@@ -52,7 +52,7 @@ data:
             columns: 2
         Reference:
             style: row
-            columns: 2
+            columns: 3
         Freelancing:
             style: row
             columns: 3
@@ -139,6 +139,9 @@ data:
         - Wikipedia:
             - icon: wikipedia.png
               href: https://www.wikipedia.org/
+        - Raindrop:
+            - icon: /icons/raindrop.png
+              href: https://app.raindrop.io/
         - ChatGPT:
             - icon: openai.png
               href: https://chatgpt.com/
@@ -276,78 +279,78 @@ data:
             href: https://grafana.apocalypso.xyz/
             description: Metrics and logging across the cluster
             icon: grafana
-            ping: grafana.monitoring.svc.cluster.local
+            ping: grafana.apocalypso.xyz
     - 🏠 User Services:
         - IT Tools:
             href: https://it-tools.apocalypso.xyz/
             description: An assortment of developer tools
             icon: it-tools
-            ping: it-tools.it-tools.svc.cluster.local
+            ping: it-tools.apocalypso.xyz
         - Draw.io:
             href: https://drawio.apocalypso.xyz/
             description: Diagrams
             icon: draw-io
-            ping: drawio.drawio.svc.cluster.local
+            ping: drawio.apocalypso.xyz
         - Open Speed Test:
             href: https://openspeedtest.apocalypso.xyz/
             description: Test your internet speed
             icon: openspeedtest
-            ping: openspeedtest.openspeedtest.svc.cluster.local
+            ping: openspeedtest.apocalypso.xyz
         - Open Stirling PDF:
             href: https://pdf.apocalypso.xyz/
             description: Various PDF tools
             icon: stirling-pdf
-            ping: pdf.pdf.svc.cluster.local
+            ping: pdf.apocalypso.xyz
         - Homebox:
             href: https://homebox.apocalypso.xyz/
             description: A self-hosted home inventory app
             icon: homebox
-            ping: homebox.homebox.svc.cluster.local
+            ping: homebox.apocalypso.xyz
         - Joplin:
             href: https://joplin.apocalypso.xyz/
             description: A self-hosted note-taking app
             icon: joplin
-            ping: joplin.joplin.svc.cluster.local
+            ping: joplin.apocalypso.xyz
         - Actual Budget:
             href: https://budget.apocalypso.xyz/
             description: A self-hosted budget app
             icon: actual-budget
-            ping: budget.budget.svc.cluster.local
+            ping: budget.apocalypso.xyz
         - Planka:
             href: https://planka.apocalypso.xyz/
             description: A self-hosted project management app
             icon: planka
-            ping: planka.planka.svc.cluster.local
+            ping: planka.apocalypso.xyz
         - Vikunja:
             href: https://vikunja.apocalypso.xyz/
             description: A self-hosted task management app
             icon: vikunja
-            ping: vikunja.vikunja.svc.cluster.local
+            ping: vikunja.apocalypso.xyz
         - FreshRSS:
             href: https://freshrss.apocalypso.xyz/
             description: A self-hosted RSS reader app
             icon: freshrss
-            ping: freshrss.freshrss.svc.cluster.local
+            ping: freshrss.apocalypso.xyz
         - Mealie:
             href: https://mealie.apocalypso.xyz/
             description: A self-hosted meal planning app
             icon: mealie
-            ping: mealie.mealie.svc.cluster.local
+            ping: mealie.apocalypso.xyz
         - OctoPrint:
             href: https://octoprint.apocalypso.xyz/
             description: A self-hosted 3D printing app
             icon: octoprint
-            ping: octoprint.octoprint.svc.cluster.local
+            ping: octoprint.apocalypso.xyz
         - Karakeep:
             href: https://karakeep.apocalypso.xyz/
             description: A self-hosted password manager app
             icon: karakeep
-            ping: karakeep.karakeep.svc.cluster.local
+            ping: karakeep.apocalypso.xyz
         - Homarr:
             href: https://homarr.apocalypso.xyz/
             description: Another homepage app, but for the arr ecosystem
             icon: homarr
-            ping: homarr.homarr.svc.cluster.local
+            ping: homarr.apocalypso.xyz
   widgets.yaml: |
     - openweathermap:
         label: Inwood
