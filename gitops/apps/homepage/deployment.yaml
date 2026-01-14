@@ -128,19 +128,32 @@ spec:
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
-      containers:
-        - name: homepage
-          image: "ghcr.io/gethomepage/homepage:latest"
-          imagePullPolicy: Always
+      initContainers:
+        - name: config-processor
+          image: alpine:latest
+          command: ['sh', '-c']
+          args:
+            - |
+              apk add --no-cache gettext
+              for file in settings.yaml widgets.yaml; do
+                if [ -f /config-source/$file ]; then
+                  envsubst < /config-source/$file > /config-processed/$file
+                fi
+              done
+              # Copy all other files as-is
+              for file in /config-source/*; do
+                filename=$(basename "$file")
+                if [ ! -f /config-processed/$filename ]; then
+                  cp "$file" /config-processed/$filename
+                fi
+              done
           env:
-            - name: HOMEPAGE_ALLOWED_HOSTS
-              value: homepage.apocalypso.xyz # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
-            - name: OPENWEATHERMAP
+            - name: OPENWEATHERMAP_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: openweathermap-api-key
                   key: api-key
-            - name: FINNHUB
+            - name: FINNHUB_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: finnhub-api-key
@@ -150,34 +163,46 @@ spec:
                 secretKeyRef:
                   name: unifi-controller-api-key
                   key: credential
+          volumeMounts:
+            - name: config-source
+              mountPath: /config-source
+            - name: config-processed
+              mountPath: /config-processed
+      containers:
+        - name: homepage
+          image: "ghcr.io/gethomepage/homepage:latest"
+          imagePullPolicy: Always
+          env:
+            - name: HOMEPAGE_ALLOWED_HOSTS
+              value: homepage.apocalypso.xyz
           ports:
             - name: http
               containerPort: 3000
               protocol: TCP
           volumeMounts:
             - mountPath: /app/config/custom.js
-              name: homepage-config
+              name: config-processed
               subPath: custom.js
             - mountPath: /app/config/custom.css
-              name: homepage-config
+              name: config-processed
               subPath: custom.css
             - mountPath: /app/config/bookmarks.yaml
-              name: homepage-config
+              name: config-processed
               subPath: bookmarks.yaml
             - mountPath: /app/config/docker.yaml
-              name: homepage-config
+              name: config-processed
               subPath: docker.yaml
             - mountPath: /app/config/kubernetes.yaml
-              name: homepage-config
+              name: config-processed
               subPath: kubernetes.yaml
             - mountPath: /app/config/services.yaml
-              name: homepage-config
+              name: config-processed
               subPath: services.yaml
             - mountPath: /app/config/settings.yaml
-              name: homepage-config
+              name: config-processed
               subPath: settings.yaml
             - mountPath: /app/config/widgets.yaml
-              name: homepage-config
+              name: config-processed
               subPath: widgets.yaml
             - mountPath: /app/config/logs
               name: logs
@@ -189,8 +214,10 @@ spec:
               memory: "512Mi"
               cpu: "800m"
       volumes:
-        - name: homepage-config
+        - name: config-source
           configMap:
             name: homepage
+        - name: config-processed
+          emptyDir: {}
         - name: logs
           emptyDir: {}
