@@ -145,6 +145,11 @@ spec:
                 secretKeyRef:
                   name: finnhub-api-key
                   key: api-key
+            - name: UNIFI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-controller-api-key
+                  key: credential
           ports:
             - name: http
               containerPort: 3000

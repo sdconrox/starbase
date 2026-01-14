@@ -11,6 +11,7 @@ data:
   settings.yaml: |
     title: Starbase
     description: 🖖🏻 Live Long and Prosper
+    startUrl: https://homepage.apocalypso.xyz
     background:
         image: https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/3a220e49-b640-4b89-95ad-221f76675213/de9p33m-2629f114-abf3-47e4-b4d8-75dc67530b84.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiIvZi8zYTIyMGU0OS1iNjQwLTRiODktOTVhZC0yMjFmNzY2NzUyMTMvZGU5cDMzbS0yNjI5ZjExNC1hYmYzLTQ3ZTQtYjRkOC03NWRjNjc1MzBiODQucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.c6zcmlOODhMQjG_fl02y91cQDVT6-4rzo97C14k2eJw
         opacity: 25
@@ -135,10 +136,6 @@ data:
             - icon: /icons/lttstore.png
               href: https://www.lttstore.com/
     - Developer:
-        - Namecheap:
-            - abbr: NC
-              icon: namecheap.png
-              href: https://www.namecheap.com/
         - GitHub:
             - abbr: GH
               icon: github.png
@@ -250,10 +247,6 @@ data:
             href: https://pdf.apocalypso.xyz/
             description: Various PDF tools
             icon: stirling-pdf
-        - Homarr:
-            href: https://homarr.apocalypso.xyz/
-            description: Another homepage app, but for the arr ecosystem
-            icon: homarr
         - Homebox:
             href: https://homebox.apocalypso.xyz/
             description: A self-hosted home inventory app
@@ -290,15 +283,36 @@ data:
             href: https://karakeep.apocalypso.xyz/
             description: A self-hosted password manager app
             icon: karakeep
+        - Homarr:
+            href: https://homarr.apocalypso.xyz/
+            description: Another homepage app, but for the arr ecosystem
+            icon: homarr
     - 🛠️ Infrastructure Services:
+        - Cloudflare:
+            href: https://www.cloudflare.com/
+            description: DNS
+            icon: cloudflare
+        - Namecheap:
+            href: https://www.namecheap.com/
+            description: DNS
+            icon: namecheap
+        - Unifi (Public):
+            href: https://unifi.sdconrox.com/
+            description: Unifi Controller via public route
+            icon: unifi
+        - Unifi (Private):
+            href: https://unifi.sdconrox.com/
+            description: Unifi Controller via private route
+            icon: unifi
         - Proxmox:
             href: https://proxmox.sdconrox.com/
             description: Proxmox
             icon: proxmox
+        - Truenas:
+            href: https://truenas.sdconrox.com/
+            description: TrueNAS SCALE
+            icon: truenas
   widgets.yaml: |
-    - search:
-        provider: google
-        target: _blank
     - resources:
         backend: resources
         expanded: true
@@ -317,6 +331,43 @@ data:
           cpu: true
           memory: true
           showLabel: true
+    - unifi_console:
+        url: https://underverse.sdconrox.com
+        key: ${UNIFI_API_KEY} # required if using API key instead of username/password
+    - openweathermap:
+        label: Inwood
+        units: imperial # or metric
+        latitude: 39.364916
+        longitude: -78.006818
+        provider: openweathermap
+    - search:
+        provider: [google, duckduckgo]
+        showSearchSuggestions: true
+        target: _blank
+    - datetime:
+        text_size: xl
+        format:
+          dateStyle: long
+          timeStyle: long
+    - stocks:
+        provider: finnhub
+        color: true # optional, defaults to true
+        cache: 1 # optional, default caches results for 1 minute
+        watchlist:
+          - DJIA
+          - NDAQ
+          - AAPL
+          # - SPX
+          # - GME
+          # - AMC
+          # - NVDA
+          # - AMD
+          # - TSM
+          # - MSFT
+          # - BRK.A
+    - search:
+        provider: google
+        target: _blank
   docker.yaml: ""
   #settings.yaml: |
   #  providers:
