@@ -51,6 +51,11 @@ spec:
           env:
             - name: TZ
               value: "America/New_York"
+            - name: HBOX_BARCODE_TOKEN_BARCODESPIDER
+              valueFrom:
+                secretKeyRef:
+                  name: barcodespider-access-token
+                  key: access-token
           resources:
             requests:
               memory: "256Mi"
