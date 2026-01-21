@@ -9,6 +9,19 @@ metadata:
   name: vikunja
   namespace: vikunja
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vikunja-data
+  namespace: vikunja
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 50Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -71,10 +84,11 @@ spec:
                 - ALL
           volumeMounts:
             - name: vikunja-data
-              mountPath: /app/vikunja
+              mountPath: /app/vikunja/data
       volumes:
         - name: vikunja-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: vikunja-data
       securityContext:
         seccompProfile:
           type: RuntimeDefault

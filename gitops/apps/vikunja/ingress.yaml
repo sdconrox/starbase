@@ -4,6 +4,11 @@ metadata:
   name: vikunja
   namespace: vikunja
   annotations:
+    gethomepage.dev/description: Task Management
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: User Services
+    gethomepage.dev/icon: vikunja
+    gethomepage.dev/name: Vikunja
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     external-dns.alpha.kubernetes.io/controller: "false"
