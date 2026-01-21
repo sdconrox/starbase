@@ -4,8 +4,14 @@ metadata:
   name: planka
   namespace: planka
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: User Services
+    gethomepage.dev/name: Planka
+    gethomepage.dev/icon: planka
+    gethomepage.dev/description: Kanban Board
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"
     external-dns.alpha.kubernetes.io/controller: "false"
 spec:
   ingressClassName: nginx

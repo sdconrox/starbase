@@ -9,6 +9,19 @@ metadata:
   name: planka
   namespace: planka
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: planka-data
+  namespace: planka
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 50Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,19 +40,56 @@ spec:
         app: planka
     spec:
       serviceAccountName: planka
+      initContainers:
+        - name: init-planka-storage
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              mkdir -p /data/user-avatars
+              mkdir -p /data/project-background-images
+              mkdir -p /data/background-images
+              mkdir -p /data/attachments
+              # Best-effort ownership; may be restricted by NFS settings.
+              chown -R 1000:1000 /data || true
+              chmod -R 775 /data || true
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+          volumeMounts:
+            - name: planka-data
+              mountPath: /data
       containers:
         - name: planka
           image: ghcr.io/plankanban/planka:latest
           imagePullPolicy: Always
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: 1337
               protocol: TCP
+          args:
+            - sh
+            - -ec
+            - |
+              export DATABASE_URL="postgresql://planka:${DB_PASSWORD}@planka-db:5432/planka"
+              exec ./start.sh
           env:
-            - name: DATABASE_URL
-              value: "postgresql://planka:planka@planka-db:5432/planka"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: planka
+                  key: db
             - name: SECRET_KEY
-              value: "your-secret-key-change-this"
+              valueFrom:
+                secretKeyRef:
+                  name: planka
+                  key: secret-key
+            - name: BASE_URL
+              value: "https://planka.apocalypso.xyz"
+            - name: TRUST_PROXY
+              value: "1"
           resources:
             requests:
               memory: "256Mi"
@@ -50,7 +100,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 3000
+              port: 1337
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -58,7 +108,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /
-              port: 3000
+              port: 1337
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 3
@@ -68,16 +118,30 @@ spec:
             readOnlyRootFilesystem: false
             runAsNonRoot: true
             runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               drop:
                 - ALL
           volumeMounts:
             - name: planka-data
-              mountPath: /app/public/uploads
+              mountPath: /app/public/user-avatars
+              subPath: user-avatars
+            - name: planka-data
+              mountPath: /app/public/project-background-images
+              subPath: project-background-images
+            - name: planka-data
+              mountPath: /app/public/background-images
+              subPath: background-images
+            - name: planka-data
+              mountPath: /app/private/attachments
+              subPath: attachments
       volumes:
         - name: planka-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: planka-data
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
 ---
@@ -92,7 +156,7 @@ spec:
   type: ClusterIP
   ports:
     - port: 80
-      targetPort: 3000
+      targetPort: 1337
       protocol: TCP
       name: http
   selector:

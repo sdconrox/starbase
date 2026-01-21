@@ -25,10 +25,10 @@ resources:
   - apps/actual-budget-application.yaml
   - apps/joplin-application.yaml
   - apps/vikunja-application.yaml
+  - apps/planka-application.yaml
 
 
 
-  # - apps/planka-application.yaml
   # - apps/freshrss-application.yaml
   # - apps/mealie-application.yaml
   # - apps/octoprint-application.yaml
