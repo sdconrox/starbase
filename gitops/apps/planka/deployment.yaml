@@ -88,6 +88,26 @@ spec:
                   key: secret-key
             - name: BASE_URL
               value: "https://planka.apocalypso.xyz"
+            - name: DEFAULT_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: planka
+                  key: email
+            - name: DEFAULT_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: planka
+                  key: password
+            - name: DEFAULT_ADMIN_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: planka
+                  key: name
+            - name: DEFAULT_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: planka
+                  key: username
             - name: TRUST_PROXY
               value: "1"
           resources:
