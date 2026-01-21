@@ -7,7 +7,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: User Services
     gethomepage.dev/name: Draw.io
-    gethomepage.dev/icon: drawio
+    gethomepage.dev/icon: draw-io
     gethomepage.dev/description: Diagrams
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
