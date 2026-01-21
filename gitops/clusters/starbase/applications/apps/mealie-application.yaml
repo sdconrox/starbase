@@ -3,12 +3,23 @@ kind: Application
 metadata:
   name: mealie
   namespace: argocd
+  annotations:
+    # Upstream values.yaml: https://github.com/trueforge-org/truecharts/blob/master/charts/stable/mealie/values.yaml
+    # Check latest version: helm show chart oci://oci.trueforge.org/truecharts/mealie
+    # Latest as of check: chart version 26.21.7, appVersion 3.9.2
+    # Local values file: gitops/apps/mealie/values.yaml
 spec:
   project: default
-  source:
-    repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
-    targetRevision: HEAD
-    path: gitops/apps/mealie
+  sources:
+    - repoURL: oci://oci.trueforge.org/truecharts
+      chart: mealie
+      targetRevision: 26.21.7
+      helm:
+        valueFiles:
+          - $valuesRepo/gitops/apps/mealie/values.yaml
+    - repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
+      targetRevision: HEAD
+      ref: valuesRepo
   destination:
     server: https://kubernetes.default.svc
     namespace: mealie
