@@ -292,10 +292,10 @@ data:
             icon: draw-io
             ping: drawio.apocalypso.xyz
         - Open Speed Test:
-            href: https://openspeedtest.apocalypso.xyz/
+            href: https://speedtest.apocalypso.xyz/
             description: Test your internet speed
             icon: openspeedtest
-            ping: openspeedtest.apocalypso.xyz
+            ping: speedtest.apocalypso.xyz
         - Open Stirling PDF:
             href: https://pdf.apocalypso.xyz/
             description: Various PDF tools
