@@ -82,6 +82,20 @@ spec:
               value: "2"
             - name: WEB_CONCURRENCY
               value: "1"
+            - name: SMTP_HOST
+              value: "smtp.mailgun.org"
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-email
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-password
           resources:
             requests:
               memory: "512Mi"
