@@ -90,6 +90,11 @@ spec:
               value: "Mealie"
             - name: SMTP_AUTH_STRATEGY
               value: "TLS"
+            - name: SMTP_FROM_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-email
             - name: SMTP_USER
               valueFrom:
                 secretKeyRef:
