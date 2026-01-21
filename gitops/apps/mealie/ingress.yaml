@@ -4,6 +4,11 @@ metadata:
   name: mealie
   namespace: mealie
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: User Services
+    gethomepage.dev/name: Mealie
+    gethomepage.dev/icon: mealie
+    gethomepage.dev/description: Meal Planning
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     external-dns.alpha.kubernetes.io/controller: "false"

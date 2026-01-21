@@ -4,6 +4,11 @@ metadata:
   name: karakeep
   namespace: karakeep
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: User Services
+    gethomepage.dev/name: Karakeep
+    gethomepage.dev/icon: karakeep
+    gethomepage.dev/description: Keep a list of things you've kept
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     external-dns.alpha.kubernetes.io/controller: "false"
