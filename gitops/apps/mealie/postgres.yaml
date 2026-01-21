@@ -65,7 +65,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: mealie-credentials
-                  key: db-username
+                  key: db-user
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
