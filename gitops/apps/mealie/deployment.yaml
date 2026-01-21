@@ -86,6 +86,10 @@ spec:
               value: "smtp.mailgun.org"
             - name: SMTP_PORT
               value: "587"
+            - name: SMTP_FROM_NAME
+              value: "Mealie"
+            - name: SMTP_AUTH_STRATEGY
+              value: "TLS"
             - name: SMTP_USER
               valueFrom:
                 secretKeyRef:
