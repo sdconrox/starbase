@@ -57,6 +57,10 @@ spec:
               value: "/tmp"
             - name: XDG_CACHE_HOME
               value: "/tmp/.cache"
+            - name: VIKUNJA_DATABASE_TYPE
+              value: "sqlite"
+            - name: VIKUNJA_DATABASE_PATH
+              value: "/db/vikunja.db"
           resources:
             requests:
               memory: "256Mi"
@@ -90,11 +94,19 @@ spec:
                 - ALL
           volumeMounts:
             - name: vikunja-data
-              mountPath: /app/vikunja/data
+              mountPath: /db
+              subPath: db
+            - name: vikunja-data
+              mountPath: /app/vikunja/files
+              subPath: files
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: vikunja-data
           persistentVolumeClaim:
             claimName: vikunja-data
+        - name: tmp
+          emptyDir: {}
       securityContext:
         seccompProfile:
           type: RuntimeDefault
