@@ -60,17 +60,17 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: mealie-credentials
-                  key: database
+                  key: db
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: mealie-credentials
-                  key: username
+                  key: db-username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mealie-credentials
-                  key: password
+                  key: db-password
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           resources:
