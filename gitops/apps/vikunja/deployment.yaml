@@ -51,6 +51,12 @@ spec:
           env:
             - name: TZ
               value: "America/New_York"
+            - name: VIKUNJA_SERVICE_PUBLICURL
+              value: "https://vikunja.apocalypso.xyz"
+            - name: HOME
+              value: "/tmp"
+            - name: XDG_CACHE_HOME
+              value: "/tmp/.cache"
           resources:
             requests:
               memory: "256Mi"
