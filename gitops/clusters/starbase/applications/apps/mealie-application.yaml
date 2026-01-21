@@ -6,14 +6,15 @@ metadata:
   annotations:
     # Upstream values.yaml: https://github.com/trueforge-org/truecharts/blob/master/charts/stable/mealie/values.yaml
     # Check latest version: helm show chart oci://oci.trueforge.org/truecharts/mealie
-    # Latest as of check: chart version 26.21.7, appVersion 3.9.2
+    # Confirmed working version: chart version 26.10.0, appVersion 3.3.1
     # Local values file: gitops/apps/mealie/values.yaml
+    # To check latest: helm show chart oci://oci.trueforge.org/truecharts/mealie
 spec:
   project: default
   sources:
     - repoURL: oci://oci.trueforge.org/truecharts
       chart: mealie
-      targetRevision: 26.21.7
+      targetRevision: 26.10.0
       helm:
         valueFiles:
           - $valuesRepo/gitops/apps/mealie/values.yaml
