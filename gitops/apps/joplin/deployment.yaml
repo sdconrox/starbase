@@ -84,29 +84,29 @@ spec:
             - name: PM2_HOME
               value: "/tmp/pm2"
             - name: MAILER_ENABLED
-              value: "true"
+              value: "1"
             - name: MAILER_HOST
               value: "smtp.mailgun.org"
             - name: MAILER_PORT
               value: "587"
-            - name: MAILER_SECURE
-              value: "true"
-            - name: MAILER_USER
+            - name: MAILER_SECURITY
+              value: "starttls"
+            - name: MAILER_AUTH_USER
               valueFrom:
                 secretKeyRef:
                   name: smtp-mailgun
                   key: smtp-email
-            - name: MAILER_PASSWORD
+            - name: MAILER_AUTH_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: smtp-mailgun
                   key: smtp-password
-            - name: MAILER_FROM_EMAIL
+            - name: MAILER_NOREPLY_EMAIL
               valueFrom:
                 secretKeyRef:
                   name: smtp-mailgun
                   key: smtp-email
-            - name: MAILER_FROM_NAME
+            - name: MAILER_NOREPLY_NAME
               value: "Joplin"
           volumeMounts:
             - name: pm2-home
