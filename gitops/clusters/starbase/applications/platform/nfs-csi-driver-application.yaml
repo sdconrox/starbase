@@ -8,9 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    chart: csi-driver-nfs
-    repoURL: https://kubernetes-csi.github.io
-    targetRevision: "4.12.1"
+    repoURL: https://github.com/kubernetes-csi/csi-driver-nfs
+    targetRevision: v4.12.1
+    path: charts/csi-driver-nfs
     helm:
       values: |
         kubeletDir: /var/lib/kubelet
