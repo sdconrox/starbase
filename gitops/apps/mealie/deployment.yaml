@@ -144,6 +144,8 @@ spec:
           persistentVolumeClaim:
             claimName: mealie-data
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---

@@ -108,6 +108,8 @@ spec:
         - name: tmp
           emptyDir: {}
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---

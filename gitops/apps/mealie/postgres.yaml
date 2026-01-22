@@ -116,5 +116,7 @@ spec:
           persistentVolumeClaim:
             claimName: mealie-postgres-data
       securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
