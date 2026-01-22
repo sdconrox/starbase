@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - platform/onepassword-connect-application.yaml
   - platform/onepassword-secrets-application.yaml
+  - platform/nfs-csi-driver-application.yaml
   - platform/nfs-provisioner-application.yaml
   - platform/metallb-application.yaml
   - platform/ingress-nginx-application.yaml
