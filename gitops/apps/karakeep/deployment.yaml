@@ -119,10 +119,14 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: run
+              mountPath: /run
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: karakeep-data
+        - name: run
+          emptyDir: {}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: Always
