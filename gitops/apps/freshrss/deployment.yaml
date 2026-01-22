@@ -121,8 +121,6 @@ spec:
         - name: apache-run
           emptyDir: {}
       securityContext:
-        fsGroup: 1000
-        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---
