@@ -9,6 +9,19 @@ metadata:
   name: karakeep
   namespace: karakeep
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: karakeep-data
+  namespace: karakeep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 100Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -74,8 +87,11 @@ spec:
               mountPath: /app/data
       volumes:
         - name: karakeep-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: karakeep-data
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---
