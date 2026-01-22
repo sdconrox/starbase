@@ -28,7 +28,6 @@ resources:
   - apps/vikunja-application.yaml
   - apps/planka-application.yaml
   - apps/mealie-application.yaml
-  - apps/freshrss-application.yaml
 
   # - apps/karakeep-application.yaml
   # - apps/octoprint-application.yaml
