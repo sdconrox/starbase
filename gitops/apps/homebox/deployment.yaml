@@ -58,11 +58,11 @@ spec:
                   key: access-token
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "2Gi"
-              cpu: "1000m"
+              memory: "4Gi"
+              cpu: "2000m"
           livenessProbe:
             httpGet:
               path: /
