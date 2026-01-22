@@ -33,7 +33,7 @@ spec:
           replicas: 1
           persistence:
             enabled: true
-            storageClassName: nfs
+            storageClassName: nfs-csi
             size: 100Gi
         gateway:
           enabled: false

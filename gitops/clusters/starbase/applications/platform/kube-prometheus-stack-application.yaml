@@ -35,7 +35,7 @@ spec:
               isDefault: false
           persistence:
             enabled: true
-            storageClassName: nfs
+            storageClassName: nfs-csi
             size: 100Gi
         prometheus:
           prometheusSpec:
@@ -43,7 +43,7 @@ spec:
             storageSpec:
               volumeClaimTemplate:
                 spec:
-                  storageClassName: nfs
+                  storageClassName: nfs-csi
                   accessModes: ["ReadWriteOnce"]
                   resources:
                     requests:
@@ -54,7 +54,7 @@ spec:
             storage:
               volumeClaimTemplate:
                 spec:
-                  storageClassName: nfs
+                  storageClassName: nfs-csi
                   accessModes: ["ReadWriteOnce"]
                   resources:
                     requests:
