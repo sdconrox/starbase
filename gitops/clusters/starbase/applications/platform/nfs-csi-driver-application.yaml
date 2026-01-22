@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/kubernetes-csi/csi-driver-nfs
     targetRevision: v4.12.1
-    path: charts/csi-driver-nfs
+    path: charts
     helm:
       values: |
         kubeletDir: /var/lib/kubelet
