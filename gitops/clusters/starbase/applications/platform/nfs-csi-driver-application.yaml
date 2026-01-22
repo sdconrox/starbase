@@ -24,6 +24,7 @@ spec:
           parameters:
             server: 10.60.0.6
             share: /mnt/sdx-pool-0/sdx-starbase
+            mountPermissions: "0777"
           reclaimPolicy: Retain
           volumeBindingMode: Immediate
           allowVolumeExpansion: true
