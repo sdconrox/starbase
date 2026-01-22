@@ -21,7 +21,7 @@ resources:
   - apps/drawio-application.yaml
   - apps/openspeedtest-application.yaml
   - apps/homarr-application.yaml
-  - apps/homebox-application.yaml
+  # - apps/homebox-application.yaml
   - apps/stirling-pdf-application.yaml
   # - apps/actual-budget-application.yaml
   # - apps/joplin-application.yaml
