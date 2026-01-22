@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kubernetes-csi/csi-driver-nfs
-    targetRevision: 4.12.1
+    targetRevision: "4.12.1"
     path: charts/csi-driver-nfs
     helm:
       values: |
