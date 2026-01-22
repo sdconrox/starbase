@@ -28,21 +28,6 @@ spec:
       labels:
         app: joplin-postgres
     spec:
-      initContainers:
-        - name: fix-permissions
-          image: busybox:latest
-          command:
-            - sh
-            - -c
-            - |
-              chown -R 999:999 /var/lib/postgresql/data
-              chmod -R 700 /var/lib/postgresql/data
-          securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
-          volumeMounts:
-            - name: postgres-data
-              mountPath: /var/lib/postgresql/data
       containers:
         - name: postgres
           image: postgres:16-alpine
@@ -112,6 +97,8 @@ spec:
           persistentVolumeClaim:
             claimName: joplin-postgres-data
       securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---
