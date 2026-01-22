@@ -9,6 +9,19 @@ metadata:
   name: freshrss
   namespace: freshrss
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: freshrss-data
+  namespace: freshrss
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 100Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -74,8 +87,11 @@ spec:
               mountPath: /var/www/FreshRSS/data
       volumes:
         - name: freshrss-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: freshrss-data
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---
