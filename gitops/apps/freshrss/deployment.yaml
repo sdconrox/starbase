@@ -77,8 +77,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
-            runAsNonRoot: true
-            runAsUser: 1000
+            runAsNonRoot: false
+            runAsUser: 0
             capabilities:
               drop:
                 - ALL
@@ -90,8 +90,6 @@ spec:
           persistentVolumeClaim:
             claimName: freshrss-data
       securityContext:
-        fsGroup: 1000
-        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---
