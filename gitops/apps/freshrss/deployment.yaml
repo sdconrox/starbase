@@ -40,6 +40,23 @@ spec:
         app: freshrss
     spec:
       serviceAccountName: freshrss
+      initContainers:
+        - name: fix-permissions
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /var/www/FreshRSS/data/cache
+              mkdir -p /var/www/FreshRSS/data/users
+              mkdir -p /var/www/FreshRSS/data/favicons
+              chmod -R 777 /var/www/FreshRSS/data
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
+          volumeMounts:
+            - name: freshrss-data
+              mountPath: /var/www/FreshRSS/data
       containers:
         - name: freshrss
           image: freshrss/freshrss:latest
@@ -77,19 +94,35 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
-            runAsNonRoot: false
-            runAsUser: 0
+            runAsNonRoot: true
+            runAsUser: 1000
             capabilities:
               drop:
                 - ALL
           volumeMounts:
             - name: freshrss-data
               mountPath: /var/www/FreshRSS/data
+            - name: etc-localtime
+              mountPath: /etc/localtime
+            - name: etc-timezone
+              mountPath: /etc/timezone
+            - name: apache-run
+              mountPath: /var/run/apache2
       volumes:
         - name: freshrss-data
           persistentVolumeClaim:
             claimName: freshrss-data
+        - name: etc-localtime
+          hostPath:
+            path: /etc/localtime
+            type: File
+        - name: etc-timezone
+          emptyDir: {}
+        - name: apache-run
+          emptyDir: {}
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---
