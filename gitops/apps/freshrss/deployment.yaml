@@ -40,23 +40,6 @@ spec:
         app: freshrss
     spec:
       serviceAccountName: freshrss
-      initContainers:
-        - name: fix-permissions
-          image: busybox:latest
-          command:
-            - sh
-            - -c
-            - |
-              mkdir -p /var/www/FreshRSS/data/cache
-              mkdir -p /var/www/FreshRSS/data/users
-              mkdir -p /var/www/FreshRSS/data/favicons
-              chmod -R 777 /var/www/FreshRSS/data
-          securityContext:
-            runAsUser: 1000
-            runAsNonRoot: true
-          volumeMounts:
-            - name: freshrss-data
-              mountPath: /var/www/FreshRSS/data
       containers:
         - name: freshrss
           image: freshrss/freshrss:latest
@@ -94,8 +77,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
-            runAsNonRoot: true
-            runAsUser: 1000
+            runAsNonRoot: false
+            runAsUser: 0
             capabilities:
               drop:
                 - ALL
