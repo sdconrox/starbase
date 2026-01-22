@@ -22,35 +22,69 @@ spec:
     requests:
       storage: 100Gi
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: meilisearch-data
+  namespace: karakeep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: karakeep
+  name: karakeep-web
   namespace: karakeep
   labels:
-    app: karakeep
+    app: karakeep-web
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: karakeep
+      app: karakeep-web
   template:
     metadata:
       labels:
-        app: karakeep
+        app: karakeep-web
     spec:
       serviceAccountName: karakeep
       containers:
-        - name: karakeep
-          image: ghcr.io/karakeep/karakeep:latest
+        - name: web
+          image: ghcr.io/karakeep-app/karakeep
           imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 3000
               protocol: TCP
           env:
-            - name: TZ
-              value: "America/New_York"
+            - name: MEILI_ADDR
+              value: "http://meilisearch:7700"
+            - name: BROWSER_WEB_URL
+              value: "http://chrome:9222"
+            - name: DATA_DIR
+              value: "/data"
+            - name: NEXTAUTH_URL
+              value: "https://karakeep.apocalypso.xyz"
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: karakeep-secrets
+                  key: NEXTAUTH_SECRET
+            - name: MEILI_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: karakeep-secrets
+                  key: MEILI_MASTER_KEY
+            - name: NEXT_PUBLIC_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: karakeep-secrets
+                  key: NEXT_PUBLIC_SECRET
           resources:
             requests:
               memory: "256Mi"
@@ -83,12 +117,143 @@ spec:
               drop:
                 - ALL
           volumeMounts:
-            - name: karakeep-data
-              mountPath: /app/data
+            - name: data
+              mountPath: /data
       volumes:
-        - name: karakeep-data
+        - name: data
           persistentVolumeClaim:
             claimName: karakeep-data
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chrome
+  namespace: karakeep
+  labels:
+    app: chrome
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chrome
+  template:
+    metadata:
+      labels:
+        app: chrome
+    spec:
+      serviceAccountName: karakeep
+      containers:
+        - name: chrome
+          image: gcr.io/zenika-hub/alpine-chrome:124
+          command:
+            - chromium-browser
+            - --headless
+            - --no-sandbox
+            - --disable-gpu
+            - --disable-dev-shm-usage
+            - --remote-debugging-address=0.0.0.0
+            - --remote-debugging-port=9222
+            - --hide-scrollbars
+          ports:
+            - name: debug
+              containerPort: 9222
+              protocol: TCP
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meilisearch
+  namespace: karakeep
+  labels:
+    app: meilisearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meilisearch
+  template:
+    metadata:
+      labels:
+        app: meilisearch
+    spec:
+      serviceAccountName: karakeep
+      containers:
+        - name: meilisearch
+          image: getmeili/meilisearch:v1.11.1
+          imagePullPolicy: Always
+          env:
+            - name: MEILI_NO_ANALYTICS
+              value: "true"
+            - name: MEILI_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: karakeep-secrets
+                  key: MEILI_MASTER_KEY
+          ports:
+            - name: http
+              containerPort: 7700
+              protocol: TCP
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 7700
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 7700
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: meilisearch-data
+              mountPath: /meili_data
+      volumes:
+        - name: meilisearch-data
+          persistentVolumeClaim:
+            claimName: meilisearch-data
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: Always
@@ -101,7 +266,7 @@ metadata:
   name: karakeep
   namespace: karakeep
   labels:
-    app: karakeep
+    app: karakeep-web
 spec:
   type: ClusterIP
   ports:
@@ -110,4 +275,38 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: karakeep
+    app: karakeep-web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chrome
+  namespace: karakeep
+  labels:
+    app: chrome
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9222
+      targetPort: 9222
+      protocol: TCP
+      name: debug
+  selector:
+    app: chrome
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meilisearch
+  namespace: karakeep
+  labels:
+    app: meilisearch
+spec:
+  type: ClusterIP
+  ports:
+    - port: 7700
+      targetPort: 7700
+      protocol: TCP
+      name: http
+  selector:
+    app: meilisearch
