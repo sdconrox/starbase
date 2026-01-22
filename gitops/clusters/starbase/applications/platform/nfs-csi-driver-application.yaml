@@ -8,9 +8,25 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://gitea.sdconrox.com/sdconrox/starbase.git
-    targetRevision: HEAD
-    path: gitops/platform/nfs-csi
+    repoURL: https://github.com/kubernetes-csi/csi-driver-nfs
+    targetRevision: 4.12.1
+    path: charts/csi-driver-nfs
+    helm:
+      values: |
+        kubeletDir: /var/lib/kubelet
+        driver:
+          name: nfs.csi.k8s.io
+        storageClass:
+          create: true
+          name: nfs-csi
+          annotations:
+            storageclass.kubernetes.io/is-default-class: "false"
+          parameters:
+            server: 10.60.0.6
+            share: /mnt/sdx-pool-0/sdx-starbase
+          reclaimPolicy: Retain
+          volumeBindingMode: Immediate
+          allowVolumeExpansion: true
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
