@@ -10,9 +10,9 @@ resources:
   - platform/external-dns-application.yaml
   - platform/cert-manager-application.yaml
   - platform/cert-manager-issuers-application.yaml
-  - platform/kube-prometheus-stack-application.yaml
-  - platform/loki-application.yaml
-  - platform/promtail-application.yaml
+  # - platform/kube-prometheus-stack-application.yaml
+  # - platform/loki-application.yaml
+  # - platform/promtail-application.yaml
   - platform/cloudflared-application.yaml
   - platform/velero-application.yaml
   - platform/velero-schedule-application.yaml
@@ -23,11 +23,11 @@ resources:
   - apps/homarr-application.yaml
   - apps/homebox-application.yaml
   - apps/stirling-pdf-application.yaml
-  - apps/actual-budget-application.yaml
-  - apps/joplin-application.yaml
-  - apps/vikunja-application.yaml
-  - apps/planka-application.yaml
-  - apps/mealie-application.yaml
+  # - apps/actual-budget-application.yaml
+  # - apps/joplin-application.yaml
+  # - apps/vikunja-application.yaml
+  # - apps/planka-application.yaml
+  # - apps/mealie-application.yaml
 
 
 
