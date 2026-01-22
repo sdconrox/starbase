@@ -27,7 +27,7 @@ resources:
   - apps/joplin-application.yaml
   - apps/vikunja-application.yaml
   - apps/planka-application.yaml
-  # - apps/mealie-application.yaml
+  - apps/mealie-application.yaml
 
 
 
