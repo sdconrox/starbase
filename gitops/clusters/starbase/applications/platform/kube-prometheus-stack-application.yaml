@@ -36,7 +36,7 @@ spec:
           persistence:
             enabled: true
             storageClassName: nfs
-            size: 1Gi
+            size: 100Gi
         prometheus:
           prometheusSpec:
             retention: 7d
@@ -58,7 +58,7 @@ spec:
                   accessModes: ["ReadWriteOnce"]
                   resources:
                     requests:
-                      storage: 1Gi
+                      storage: 100Gi
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
