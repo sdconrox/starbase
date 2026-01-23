@@ -1,0 +1,310 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-ngx-media
+  namespace: paperless-ngx
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 1000Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-ngx-data
+  namespace: paperless-ngx
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-ngx-consume
+  namespace: paperless-ngx
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-ngx-export
+  namespace: paperless-ngx
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-ngx
+  namespace: paperless-ngx
+  labels:
+    app: paperless-ngx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-ngx
+  template:
+    metadata:
+      labels:
+        app: paperless-ngx
+    spec:
+      serviceAccountName: paperless-ngx
+      containers:
+        - name: paperless-ngx
+          image: ghcr.io/paperless-ngx/paperless-ngx:2.20.5
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Construct Redis URL from redis-pass
+              export PAPERLESS_REDIS="redis://:${REDIS_PASS}@paperless-ngx-redis:6379/0"
+              # Execute the original entrypoint
+              # Paperless-ngx uses s6-overlay, so we exec the original process
+              exec /init
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            # Database Configuration
+            - name: PAPERLESS_DBHOST
+              value: "paperless-ngx-postgres"
+            - name: PAPERLESS_DBPORT
+              value: "5432"
+            - name: PAPERLESS_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-secrets
+                  key: db
+            - name: PAPERLESS_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-secrets
+                  key: db-user
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-secrets
+                  key: db-pass
+            - name: PAPERLESS_DBENGINE
+              value: "postgresql"
+            - name: PAPERLESS_DBSSLMODE
+              value: "prefer"
+            # Redis Configuration
+            # The Redis URL is constructed dynamically from redis-pass in the container command
+            - name: REDIS_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-secrets
+                  key: redis-pass
+            # Secret Key (required for security)
+            - name: PAPERLESS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-secrets
+                  key: secret-key
+            # URL Configuration (update with your domain)
+            - name: PAPERLESS_URL
+              value: "https://paperless.apocalypso.xyz"
+            # Paths
+            - name: PAPERLESS_MEDIA_ROOT
+              value: "/usr/src/paperless/media"
+            - name: PAPERLESS_DATA_DIR
+              value: "/usr/src/paperless/data"
+            - name: PAPERLESS_CONSUMPTION_DIR
+              value: "/usr/src/paperless/consume"
+            - name: PAPERLESS_STATICDIR
+              value: "/usr/src/paperless/static"
+            # Timezone
+            - name: PAPERLESS_TIME_ZONE
+              value: "America/New_York"
+            - name: TZ
+              value: "America/New_York"
+            # OCR Configuration
+            - name: PAPERLESS_OCR_LANGUAGE
+              value: "eng"
+            - name: PAPERLESS_OCR_MODE
+              value: "skip"
+            - name: PAPERLESS_OCR_CLEAN
+              value: "clean"
+            - name: PAPERLESS_OCR_DESKEW
+              value: "true"
+            - name: PAPERLESS_OCR_ROTATE_PAGES
+              value: "true"
+            - name: PAPERLESS_OCR_OUTPUT_TYPE
+              value: "pdfa"
+            # Task Workers (adjust based on your cluster resources)
+            - name: PAPERLESS_TASK_WORKERS
+              value: "2"
+            - name: PAPERLESS_THREADS_PER_WORKER
+              value: "2"
+            # Web Server Configuration
+            - name: PAPERLESS_WEBSERVER_WORKERS
+              value: "2"
+            - name: PAPERLESS_PORT
+              value: "8000"
+            - name: PAPERLESS_BIND_ADDR
+              value: "::"
+            # Email Configuration (optional - using Mailgun)
+            - name: PAPERLESS_EMAIL_HOST
+              value: "smtp.mailgun.org"
+            - name: PAPERLESS_EMAIL_PORT
+              value: "587"
+            - name: PAPERLESS_EMAIL_USE_TLS
+              value: "true"
+            - name: PAPERLESS_EMAIL_HOST_USER
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-email
+            - name: PAPERLESS_EMAIL_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-password
+            - name: PAPERLESS_EMAIL_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-email
+            # Admin User (optional - for initial setup)
+            - name: PAPERLESS_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-secrets
+                  key: username
+                  optional: true
+            - name: PAPERLESS_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-secrets
+                  key: password
+                  optional: true
+            # User Mapping (for file permissions)
+            - name: USERMAP_UID
+              value: "1000"
+            - name: USERMAP_GID
+              value: "1000"
+            # Consumer Configuration
+            - name: PAPERLESS_CONSUMER_RECURSIVE
+              value: "false"
+            - name: PAPERLESS_CONSUMER_POLLING
+              value: "0"
+            # Enable compression
+            - name: PAPERLESS_ENABLE_COMPRESSION
+              value: "true"
+            # Enable NLTK for better classification
+            - name: PAPERLESS_ENABLE_NLTK
+              value: "true"
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "4000m"
+            limits:
+              memory: "8Gi"
+              cpu: "8000m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: media
+              mountPath: /usr/src/paperless/media
+            - name: data
+              mountPath: /usr/src/paperless/data
+            - name: consume
+              mountPath: /usr/src/paperless/consume
+            - name: export
+              mountPath: /usr/src/paperless/export
+            - name: static
+              mountPath: /usr/src/paperless/static
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: paperless-ngx-media
+        - name: data
+          persistentVolumeClaim:
+            claimName: paperless-ngx-data
+        - name: consume
+          persistentVolumeClaim:
+            claimName: paperless-ngx-consume
+        - name: export
+          persistentVolumeClaim:
+            claimName: paperless-ngx-export
+        - name: static
+          emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-ngx
+  namespace: paperless-ngx
+  labels:
+    app: paperless-ngx
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: paperless-ngx
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: paperless-ngx
+  namespace: paperless-ngx
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: paperless-ngx

@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: paperless-ngx
+  namespace: paperless-ngx
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: User Services
+    gethomepage.dev/name: Paperless-ngx
+    gethomepage.dev/icon: paperless-ngx
+    gethomepage.dev/description: Document Management System
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    external-dns.alpha.kubernetes.io/controller: "false"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - paperless.apocalypso.xyz
+      secretName: paperless-ngx-tls
+  rules:
+    - host: paperless.apocalypso.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: paperless-ngx
+                port:
+                  number: 80
