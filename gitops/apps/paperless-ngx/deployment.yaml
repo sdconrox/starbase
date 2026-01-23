@@ -76,10 +76,9 @@ spec:
             - /bin/sh
             - -c
             - |
-              # Construct Redis URL from redis-pass
+              # Construct Redis URL from redis-pass before s6-overlay starts
               export PAPERLESS_REDIS="redis://:${REDIS_PASS}@paperless-ngx-redis:6379/0"
-              # Execute the original entrypoint
-              # Paperless-ngx uses s6-overlay, so we exec the original process
+              # Execute s6-overlay's init (it will drop to USERMAP_UID after setup)
               exec /init
           ports:
             - name: http
@@ -200,7 +199,7 @@ spec:
                   name: paperless-ngx-secrets
                   key: password
                   optional: true
-            # User Mapping (for file permissions)
+            # User Mapping (s6-overlay will drop to this user after initialization)
             - name: USERMAP_UID
               value: "1000"
             - name: USERMAP_GID
@@ -252,9 +251,15 @@ spec:
               mountPath: /usr/src/paperless/export
             - name: static
               mountPath: /usr/src/paperless/static
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /run
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
+            # s6-overlay needs to run as root initially to set up /run
+            # It will drop to USERMAP_UID (1000) after initialization
             runAsUser: 0
             runAsNonRoot: false
             capabilities:
@@ -274,6 +279,10 @@ spec:
           persistentVolumeClaim:
             claimName: paperless-ngx-export
         - name: static
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: run
           emptyDir: {}
       securityContext:
         fsGroup: 1000
