@@ -27,29 +27,6 @@ spec:
         app: joplin
     spec:
       serviceAccountName: joplin
-      initContainers:
-        - name: init-joplin-dirs
-          image: busybox:latest
-          command:
-            - sh
-            - -c
-            - |
-              mkdir -p /home/joplin/packages/server/logs
-              mkdir -p /home/joplin/packages/server/temp
-              mkdir -p /home/joplin/packages/server/data
-              chown -R 1000:1000 /home/joplin
-              chmod -R 755 /home/joplin
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-          volumeMounts:
-            - name: joplin-logs
-              mountPath: /home/joplin/packages/server/logs
-            - name: joplin-temp
-              mountPath: /home/joplin/packages/server/temp
-            - name: joplin-data
-              mountPath: /home/joplin/packages/server/data
       containers:
         - name: joplin
           image: joplin/server:latest
