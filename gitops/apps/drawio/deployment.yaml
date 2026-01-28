@@ -28,17 +28,26 @@ spec:
     spec:
       serviceAccountName: drawio
       initContainers:
-        - name: fix-permissions
+        - name: copy-tomcat
           image: jgraph/drawio:latest
           command: ["/bin/sh"]
           args:
             - -c
             - |
-              # Change ownership of tomcat webapps directory to UID 1000
-              chown -R 1000:1000 /usr/local/tomcat/webapps || true
-              # Also fix any other directories that might need write access
-              chown -R 1000:1000 /usr/local/tomcat/conf /usr/local/tomcat/logs /usr/local/tomcat/temp /usr/local/tomcat/work 2>/dev/null || true
+              # Copy entire tomcat directory to writable volume
+              cp -a /usr/local/tomcat/. /tomcat-writable/ 2>/dev/null || true
+              # Ensure all required directories exist
+              mkdir -p /tomcat-writable/webapps/draw/js
+              mkdir -p /tomcat-writable/conf/Catalina/localhost
+              mkdir -p /tomcat-writable/logs
+              mkdir -p /tomcat-writable/temp
+              mkdir -p /tomcat-writable/work
+              # Set ownership to UID 1000
+              chown -R 1000:1000 /tomcat-writable || true
               exit 0
+          volumeMounts:
+            - name: tomcat-writable
+              mountPath: /tomcat-writable
           securityContext:
             runAsUser: 0
             runAsNonRoot: false
@@ -82,6 +91,12 @@ spec:
             capabilities:
               drop:
                 - ALL
+          volumeMounts:
+            - name: tomcat-writable
+              mountPath: /usr/local/tomcat
+      volumes:
+        - name: tomcat-writable
+          emptyDir: {}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: Always
