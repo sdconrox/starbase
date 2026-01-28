@@ -28,21 +28,34 @@ spec:
     spec:
       serviceAccountName: openspeedtest
       initContainers:
-        - name: init-nginx-config
+        - name: copy-nginx-config
           image: openspeedtest/latest
-          command:
-            - sh
+          # Override both entrypoint and command to prevent app from starting
+          command: ["/bin/sh"]
+          args:
             - -c
             - |
-              # Copy nginx config files to writable volume
-              cp -r /etc/nginx/* /nginx-config/ || true
-              # Ensure directories exist
-              mkdir -p /nginx-config/conf.d
+              # Copy original nginx config files to writable volume
+              if [ -d /etc/nginx ]; then
+                cp -a /etc/nginx/. /nginx-etc/ 2>/dev/null || true
+              fi
+              # Create required directories
+              mkdir -p /nginx-etc/conf.d
+              mkdir -p /nginx-cache
+              mkdir -p /nginx-logs
+              mkdir -p /var-run
               # Set ownership for UID 1000
-              chown -R 1000:1000 /nginx-config || true
+              chown -R 1000:1000 /nginx-etc /nginx-cache /nginx-logs /var-run || true
+              exit 0
           volumeMounts:
             - name: nginx-etc
-              mountPath: /nginx-config
+              mountPath: /nginx-etc
+            - name: nginx-cache
+              mountPath: /nginx-cache
+            - name: nginx-logs
+              mountPath: /nginx-logs
+            - name: var-run
+              mountPath: /var-run
           securityContext:
             runAsUser: 0
             runAsNonRoot: false
@@ -89,10 +102,18 @@ spec:
           volumeMounts:
             - name: nginx-etc
               mountPath: /etc/nginx
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-logs
+              mountPath: /var/log/nginx
             - name: var-run
               mountPath: /var/run
       volumes:
         - name: nginx-etc
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-logs
           emptyDir: {}
         - name: var-run
           emptyDir: {}
