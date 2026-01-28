@@ -68,6 +68,38 @@ spec:
         app: paperless-ngx
     spec:
       serviceAccountName: paperless-ngx
+      initContainers:
+        - name: setup-tmp-directory
+          image: ghcr.io/paperless-ngx/paperless-ngx:2.20.5
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Pre-create /tmp/paperless with the structure the init script expects
+              # Run the same setup that the init script would do, but as root
+              mkdir -p /tmp-shared/paperless
+              # The init script will try to chown this, so ensure it's writable
+              # Even with fsGroup, root should be able to chown
+              chown -R 0:0 /tmp-shared/paperless || true
+              chmod -R 755 /tmp-shared/paperless || true
+              # Also set up /var/tmp
+              mkdir -p /var-tmp-shared
+              chown -R 0:0 /var-tmp-shared || true
+              chmod -R 755 /var-tmp-shared || true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp-shared
+            - name: var-tmp
+              mountPath: /var-tmp-shared
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            capabilities:
+              add:
+                - CHOWN
+                - FOWNER
+              drop:
+                - ALL
       containers:
         - name: paperless-ngx
           image: ghcr.io/paperless-ngx/paperless-ngx:2.20.5
@@ -139,6 +171,9 @@ spec:
               value: "America/New_York"
             - name: TZ
               value: "America/New_York"
+            # Use a writable temp directory that we can control
+            - name: TMPDIR
+              value: "/var/tmp"
             # OCR Configuration
             - name: PAPERLESS_OCR_LANGUAGE
               value: "eng"
@@ -249,6 +284,10 @@ spec:
               mountPath: /usr/src/paperless/consume
             - name: export
               mountPath: /usr/src/paperless/export
+            - name: tmp
+              mountPath: /tmp
+            - name: var-tmp
+              mountPath: /var/tmp
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -257,6 +296,9 @@ spec:
             runAsUser: 0
             runAsNonRoot: false
             capabilities:
+              # Keep CHOWN capability to allow init script to chown /tmp/paperless
+              add:
+                - CHOWN
               drop:
                 - ALL
       volumes:
@@ -272,6 +314,10 @@ spec:
         - name: export
           persistentVolumeClaim:
             claimName: paperless-ngx-export
+        - name: tmp
+          emptyDir: {}
+        - name: var-tmp
+          emptyDir: {}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: Always
