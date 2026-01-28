@@ -4,6 +4,19 @@ metadata:
   name: homepage
 ---
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homepage-data
+  namespace: homepage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: homepage
@@ -140,13 +153,19 @@ spec:
                   envsubst < /config-source/$file > /config-processed/$file
                 fi
               done
-              # Copy all other files as-is
+              # Copy all other files as-is to processed directory
               for file in /config-source/*; do
                 filename=$(basename "$file")
                 if [ ! -f /config-processed/$filename ]; then
                   cp "$file" /config-processed/$filename
                 fi
               done
+              # Copy processed config files to persistent storage
+              # This allows homepage to read them and also write new config files
+              mkdir -p /homepage-data
+              cp -r /config-processed/* /homepage-data/ || true
+              # Ensure proper ownership
+              chown -R 1000:1000 /homepage-data || true
           env:
             - name: OPENWEATHERMAP_API_KEY
               valueFrom:
@@ -163,11 +182,16 @@ spec:
                 secretKeyRef:
                   name: unifi-controller-api-key
                   key: credential
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
           volumeMounts:
             - name: config-source
               mountPath: /config-source
             - name: config-processed
               mountPath: /config-processed
+            - name: homepage-data
+              mountPath: /homepage-data
       containers:
         - name: homepage
           image: "ghcr.io/gethomepage/homepage:latest"
@@ -180,32 +204,10 @@ spec:
               containerPort: 3000
               protocol: TCP
           volumeMounts:
-            - mountPath: /app/config/custom.js
-              name: config-processed
-              subPath: custom.js
-            - mountPath: /app/config/custom.css
-              name: config-processed
-              subPath: custom.css
-            - mountPath: /app/config/bookmarks.yaml
-              name: config-processed
-              subPath: bookmarks.yaml
-            - mountPath: /app/config/docker.yaml
-              name: config-processed
-              subPath: docker.yaml
-            - mountPath: /app/config/kubernetes.yaml
-              name: config-processed
-              subPath: kubernetes.yaml
-            - mountPath: /app/config/services.yaml
-              name: config-processed
-              subPath: services.yaml
-            - mountPath: /app/config/settings.yaml
-              name: config-processed
-              subPath: settings.yaml
-            - mountPath: /app/config/widgets.yaml
-              name: config-processed
-              subPath: widgets.yaml
-            - mountPath: /app/config/logs
-              name: logs
+            - name: homepage-data
+              mountPath: /app/config
+            - name: config-processed
+              mountPath: /app/config-processed
           resources:
             requests:
               memory: "256Mi"
@@ -228,8 +230,9 @@ spec:
             name: homepage
         - name: config-processed
           emptyDir: {}
-        - name: logs
-          emptyDir: {}
+        - name: homepage-data
+          persistentVolumeClaim:
+            claimName: homepage-data
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: Always
