@@ -68,6 +68,23 @@ spec:
         app: paperless-ngx
     spec:
       serviceAccountName: paperless-ngx
+      initContainers:
+        - name: setup-run-directory
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              # Create s6-overlay run directory structure with proper permissions
+              mkdir -p /run/s6 /run/s6-rc
+              chown -R 1000:1000 /run || true
+              chmod -R 755 /run || true
+          volumeMounts:
+            - name: run
+              mountPath: /run
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
       containers:
         - name: paperless-ngx
           image: ghcr.io/paperless-ngx/paperless-ngx:2.20.5
@@ -258,9 +275,10 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
+            # s6-overlay needs to start as root to initialize /run and other directories
+            # It will drop to USERMAP_UID (1000) after initialization
+            runAsUser: 0
+            runAsNonRoot: false
             capabilities:
               drop:
                 - ALL
