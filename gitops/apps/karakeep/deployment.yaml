@@ -85,6 +85,11 @@ spec:
                 secretKeyRef:
                   name: karakeep-secrets
                   key: NEXT_PUBLIC_SECRET
+            # User Mapping (s6-overlay will drop to this user after initialization)
+            - name: USERMAP_UID
+              value: "1000"
+            - name: USERMAP_GID
+              value: "1000"
           resources:
             requests:
               memory: "256Mi"
@@ -111,10 +116,15 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
+            # s6-overlay needs to start as root to initialize /run
+            # It will drop to USERMAP_UID (1000) after initialization
+            runAsUser: 0
+            runAsNonRoot: false
             capabilities:
+              # Keep capabilities needed for s6-overlay to drop from root to mapped user
+              add:
+                - SETUID
+                - SETGID
               drop:
                 - ALL
           volumeMounts:
