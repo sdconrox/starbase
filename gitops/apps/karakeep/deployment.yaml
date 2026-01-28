@@ -130,7 +130,9 @@ spec:
           emptyDir: {}
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: Always
+        # With NFS mapall, ownership is handled server-side
+        # OnRootMismatch avoids applying fsGroup when not needed, reducing mount issues
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
 ---
@@ -186,7 +188,7 @@ spec:
                 - ALL
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: Always
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
 ---
@@ -265,7 +267,7 @@ spec:
             claimName: meilisearch-data
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: Always
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
 ---
