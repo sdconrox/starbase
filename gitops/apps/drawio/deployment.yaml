@@ -27,6 +27,21 @@ spec:
         app: drawio
     spec:
       serviceAccountName: drawio
+      initContainers:
+        - name: fix-permissions
+          image: jgraph/drawio:latest
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - |
+              # Change ownership of tomcat webapps directory to UID 1000
+              chown -R 1000:1000 /usr/local/tomcat/webapps || true
+              # Also fix any other directories that might need write access
+              chown -R 1000:1000 /usr/local/tomcat/conf /usr/local/tomcat/logs /usr/local/tomcat/temp /usr/local/tomcat/work 2>/dev/null || true
+              exit 0
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
       containers:
         - name: drawio
           image: jgraph/drawio:latest
