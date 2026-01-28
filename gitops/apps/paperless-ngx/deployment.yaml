@@ -296,9 +296,11 @@ spec:
             runAsUser: 0
             runAsNonRoot: false
             capabilities:
-              # Keep CHOWN capability to allow init script to chown /tmp/paperless
+              # Keep capabilities needed for s6-overlay to drop from root to mapped user
               add:
                 - CHOWN
+                - SETUID
+                - SETGID
               drop:
                 - ALL
       volumes:
