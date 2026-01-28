@@ -40,8 +40,9 @@ spec:
               chown -R 1000:1000 /home/joplin
               chmod -R 755 /home/joplin
           securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
           volumeMounts:
             - name: joplin-logs
               mountPath: /home/joplin/packages/server/logs
@@ -155,6 +156,7 @@ spec:
             readOnlyRootFilesystem: false
             runAsNonRoot: true
             runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               drop:
                 - ALL
@@ -168,6 +170,8 @@ spec:
         - name: joplin-data
           emptyDir: {}
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
 ---

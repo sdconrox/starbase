@@ -56,8 +56,9 @@ spec:
               chown -R 1000:1000 /data || true
               chmod -R 775 /data || true
           securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
           volumeMounts:
             - name: planka-data
               mountPath: /data

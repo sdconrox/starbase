@@ -258,10 +258,9 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
-            # s6-overlay needs to run as root initially to set up /run
-            # It will drop to USERMAP_UID (1000) after initialization
-            runAsUser: 0
-            runAsNonRoot: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               drop:
                 - ALL

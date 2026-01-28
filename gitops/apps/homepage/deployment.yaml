@@ -213,6 +213,15 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "800m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
       volumes:
         - name: config-source
           configMap:
@@ -221,3 +230,8 @@ spec:
           emptyDir: {}
         - name: logs
           emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault

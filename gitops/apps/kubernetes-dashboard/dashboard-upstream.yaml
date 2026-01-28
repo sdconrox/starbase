@@ -186,6 +186,8 @@ spec:
         k8s-app: kubernetes-dashboard
     spec:
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -225,8 +227,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-            runAsUser: 1001
-            runAsGroup: 2001
+            runAsUser: 1000
+            runAsGroup: 1000
       volumes:
         - name: kubernetes-dashboard-certs
           secret:
@@ -278,6 +280,8 @@ spec:
         k8s-app: dashboard-metrics-scraper
     spec:
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -306,8 +310,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-            runAsUser: 1001
-            runAsGroup: 2001
+            runAsUser: 1000
+            runAsGroup: 1000
       serviceAccountName: kubernetes-dashboard
       nodeSelector:
         "kubernetes.io/os": linux

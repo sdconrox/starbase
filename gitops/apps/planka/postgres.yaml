@@ -88,13 +88,20 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 6
           securityContext:
-            # Allow the official image entrypoint to fix volume permissions.
-            runAsUser: 0
-            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
       volumes:
         - name: planka-db-data
           persistentVolumeClaim:
             claimName: planka-db-data
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault

@@ -83,7 +83,8 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
             runAsNonRoot: true
-            runAsUser: 65532
+            runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               drop:
                 - ALL
@@ -95,7 +96,7 @@ spec:
           persistentVolumeClaim:
             claimName: homebox-data
       securityContext:
-        fsGroup: 65532
+        fsGroup: 1000
         fsGroupChangePolicy: Always
         seccompProfile:
           type: RuntimeDefault
