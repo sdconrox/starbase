@@ -249,10 +249,6 @@ spec:
               mountPath: /usr/src/paperless/consume
             - name: export
               mountPath: /usr/src/paperless/export
-            - name: static
-              mountPath: /usr/src/paperless/static
-            - name: tmp
-              mountPath: /tmp
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -276,10 +272,6 @@ spec:
         - name: export
           persistentVolumeClaim:
             claimName: paperless-ngx-export
-        - name: static
-          emptyDir: {}
-        - name: tmp
-          emptyDir: {}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: Always
