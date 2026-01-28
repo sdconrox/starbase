@@ -9,6 +9,19 @@ metadata:
   name: homarr
   namespace: homarr
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homarr-data
+  namespace: homarr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 100Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,23 +40,6 @@ spec:
         app: homarr
     spec:
       serviceAccountName: homarr
-      initContainers:
-        - name: init-permissions
-          image: busybox:latest
-          command: ['sh', '-c']
-          args:
-            - |
-              mkdir -p /data /app/config
-              chown -R 1000:1000 /data /app/config
-              chmod -R 755 /data /app/config
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          volumeMounts:
-            - name: homarr-data
-              mountPath: /data
-            - name: homarr-config
-              mountPath: /app/config
       containers:
         - name: homarr
           image: ghcr.io/ajnart/homarr:latest
@@ -94,7 +90,8 @@ spec:
               mountPath: /app/config
       volumes:
         - name: homarr-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: homarr-data
         - name: homarr-config
           emptyDir: {}
       securityContext:
