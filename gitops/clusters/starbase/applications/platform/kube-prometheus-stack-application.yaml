@@ -23,12 +23,14 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-            fsGroup: 1000
             runAsNonRoot: true
           podSecurityContext:
             runAsUser: 1000
             runAsGroup: 1000
             fsGroup: 1000
+            # With NFS mapall, ownership is handled server-side
+            # OnRootMismatch avoids applying fsGroup when not needed, reducing mount issues
+            fsGroupChangePolicy: OnRootMismatch
             runAsNonRoot: true
           grafana.ini:
             server:
