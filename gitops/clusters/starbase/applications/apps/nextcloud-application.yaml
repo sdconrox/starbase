@@ -66,14 +66,22 @@ spec:
           enabled: false
         postgresql:
           enabled: true
+          # Match paperless/mealie/joplin: run as 1000 so NFS Mapall (k8s-nfs) ownership matches
+          volumePermissions:
+            enabled: true
           auth:
             existingSecret: nextcloud-secrets
             secretKeys:
               userPasswordKey: db-password
-              adminPasswordKey: db-super-password
+              adminPasswordKey: postgres-password
               replicationPasswordKey: db-replication-password
           architecture: replication
           primary:
+            podSecurityContext:
+              fsGroup: 1000
+            containerSecurityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
             persistence:
               enabled: true
               size: 50Gi
@@ -87,6 +95,11 @@ spec:
                 cpu: "8000m"
           readReplicas:
             replicaCount: 2
+            podSecurityContext:
+              fsGroup: 1000
+            containerSecurityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
             persistence:
               enabled: true
               size: 50Gi

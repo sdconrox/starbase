@@ -13,7 +13,7 @@ Create a single 1Password item at **`vaults/starbase/items/nextcloud`** with the
 | `username`               | Nextcloud admin username       |
 | `password`               | Nextcloud admin password       |
 | `db-password`            | PostgreSQL user password       |
-| `db-super-password`      | PostgreSQL superuser password  |
+| `postgres-password`     | PostgreSQL superuser (admin) password |
 | `db-replication-password`| PostgreSQL replication password|
 | `redis-password`         | Redis password                 |
 
@@ -23,3 +23,7 @@ The Application’s Helm values include `extraManifests` so the operator creates
 - **smtp-mailgun** (from `vaults/starbase/items/mailgun`) – SMTP for Mailgun (same item as Mealie/Paperless; keys `smtp-email`, `smtp-password`)
 
 SMTP is configured via env vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_NAME`, `SMTP_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_DOMAIN`) per [Nextcloud docker SMTP](https://github.com/nextcloud/docker?tab=readme-ov-file#e-mail-smtp-configuration).
+
+## NFS and PostgreSQL
+
+PostgreSQL (Bitnami subchart) is configured to run as **UID 1000** and **GID 1000**, with **fsGroup 1000**, so it matches your other Postgres workloads (paperless-ngx, mealie, joplin) and the NFS Mapall user `k8s-nfs` (typically UID 1000). No NFS server changes are required.
