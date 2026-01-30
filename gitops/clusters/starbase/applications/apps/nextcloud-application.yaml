@@ -51,73 +51,8 @@ spec:
                   key: smtp-email
             - name: MAIL_DOMAIN
               value: apocalypso.xyz
-          # Run as 1000 (matches NFS Mapall k8s-nfs). Redis PHP config is created by init container
-          # so the image entrypoint does not need root to write /usr/local/etc/php/conf.d/redis-session.ini.
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-          podSecurityContext:
-            fsGroup: 1000
-          extraVolumes:
-            - name: php-conf-d
-              emptyDir: {}
-          extraVolumeMounts:
-            - name: php-conf-d
-              mountPath: /usr/local/etc/php/conf.d
-          extraInitContainers:
-            # Make the PVC "html" subpath writable by UID 1000. Mount same subPath as main
-            # container so we don't hit nested /var/www/html/html (which can EPERM on NFS).
-            - name: nextcloud-data-chown
-              image: docker.io/library/busybox:1.36
-              imagePullPolicy: IfNotPresent
-              securityContext:
-                runAsUser: 0
-                runAsGroup: 0
-                runAsNonRoot: false
-              volumeMounts:
-                - name: nextcloud-main
-                  mountPath: /var/www/html
-                  subPath: html
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  chown -R 1000:1000 /var/www/html 2>/dev/null || true
-                  chmod -R u+rwX,g+rwX,o+rX /var/www/html
-            - name: php-conf-d-init
-              image: docker.io/library/nextcloud:apache
-              imagePullPolicy: IfNotPresent
-              securityContext:
-                runAsUser: 0
-                runAsGroup: 0
-                runAsNonRoot: false
-              env:
-                - name: REDIS_HOST
-                  value: nextcloud-redis-master
-                - name: REDIS_HOST_PORT
-                  value: "6379"
-                - name: REDIS_HOST_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: nextcloud-secrets
-                      key: redis-password
-              volumeMounts:
-                - name: php-conf-d
-                  mountPath: /php-conf-d
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  cp -a /usr/local/etc/php/conf.d/. /php-conf-d/ 2>/dev/null || true
-                  printf '%s\n' \
-                    'session.save_handler = redis' \
-                    "session.save_path = \"tcp://${REDIS_HOST}:${REDIS_HOST_PORT:-6379}?auth=${REDIS_HOST_PASSWORD}\"" \
-                    'redis.session.locking_enabled = 1' \
-                    'redis.session.lock_retries = -1' \
-                    'redis.session.lock_wait_time = 10000' \
-                    > /php-conf-d/redis-session.ini
-                  chown -R 1000:1000 /php-conf-d
+          # Run as image default (root). With NFS Mapall, all writes map to k8s-nfs regardless of UID.
+          # No securityContext override needed - let the image run as designed.
         internalDatabase:
           enabled: false
         externalDatabase:
@@ -212,10 +147,6 @@ spec:
           type: cronjob
           cronjob:
             schedule: "*/5 * * * *"
-            securityContext:
-              runAsUser: 1000
-              runAsGroup: 1000
-              runAsNonRoot: true
         strategy:
           type: RollingUpdate
           rollingUpdate:

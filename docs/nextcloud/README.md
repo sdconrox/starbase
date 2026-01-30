@@ -17,21 +17,23 @@ Create a single 1Password item at **`vaults/starbase/items/nextcloud`** with the
 | `db-replication-password`| PostgreSQL replication password       |
 | `redis-password`         | Redis password                        |
 
-The Application’s Helm values include `extraManifests` so the operator creates:
+The Application's Helm values include `extraManifests` so the operator creates:
 
 - **nextcloud-secrets** (from `vaults/starbase/items/nextcloud`) – admin, DB, Redis
 - **smtp-mailgun** (from `vaults/starbase/items/mailgun`) – SMTP for Mailgun (same item as Mealie/Paperless; keys `smtp-email`, `smtp-password`)
 
 SMTP is configured via env vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_NAME`, `SMTP_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_DOMAIN`) per [Nextcloud docker SMTP](https://github.com/nextcloud/docker?tab=readme-ov-file#e-mail-smtp-configuration).
 
-## NFS and PostgreSQL
+## NFS with Mapall
 
-PostgreSQL (Bitnami subchart) is configured to run as **UID 1000** and **GID 1000**, with **fsGroup 1000**, so it matches your other Postgres workloads (paperless-ngx, mealie, joplin) and the NFS Mapall user `k8s-nfs` (typically UID 1000). No NFS server changes are required.
+The NFS share uses **Mapall User/Group = k8s-nfs**, so all client operations map to `k8s-nfs` on the server regardless of the UID inside the container. This means:
 
-## Why the main app runs as UID 1000 (no root)
+- Nextcloud runs as **root** (the image default) - NFS sees writes as `k8s-nfs`
+- PostgreSQL runs as **UID 1000** - NFS sees writes as `k8s-nfs`
+- Both work because they're the same user on the server side
 
-The official Nextcloud image entrypoint writes `/usr/local/etc/php/conf.d/redis-session.ini` (and does rsync to populate `/var/www/html`). That directory is root-owned in the image, so the container must either run as root or have that config created beforehand. We use an **init container** that runs as root, creates the Redis session config in a shared `emptyDir`, and chowns it to 1000:1000. The main container then runs as **UID 1000** (matching NFS Mapall) and can write to that dir; the entrypoint completes and populates the PVC with the app (including `cron.php`).
+**Note:** `chown` and `chmod` will fail with "Operation not permitted" on this NFS - that's expected with Mapall. Nextcloud runs as root (no securityContext override) so it can write to the container filesystem (e.g. PHP config) and rsync into the NFS volume.
 
 ## Cron job and startup order
 
-The **cron does not run first**. The CronJob mounts the same PVC as the main app. The PVC gets `/var/www/html` (including `cron.php`) only after the main Nextcloud pods start and the entrypoint completes (rsync from image to volume). So the first time you deploy, the cron job may fail with “Could not open input file: /var/www/html/cron.php” until the main pods are up and healthy. Once the main app has run at least once, the cron will find `cron.php` and succeed.
+The CronJob mounts the same PVC as the main app. The PVC only contains the app (including `cron.php`) after the main Nextcloud pods start and the entrypoint completes its rsync. On first deploy, the cron may fail until the main app is up. Once the main app has run successfully, the cron will find `cron.php` and work.
