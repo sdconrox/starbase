@@ -66,8 +66,8 @@ spec:
             - name: php-conf-d
               mountPath: /usr/local/etc/php/conf.d
           extraInitContainers:
-            # Make PVC writable by UID 1000. chown can fail on NFS (Operation not permitted),
-            # so use chmod to ensure the main container can rsync into /var/www/html.
+            # Make the PVC "html" subpath writable by UID 1000. Mount same subPath as main
+            # container so we don't hit nested /var/www/html/html (which can EPERM on NFS).
             - name: nextcloud-data-chown
               image: docker.io/library/busybox:1.36
               imagePullPolicy: IfNotPresent
@@ -78,6 +78,7 @@ spec:
               volumeMounts:
                 - name: nextcloud-main
                   mountPath: /var/www/html
+                  subPath: html
               command:
                 - /bin/sh
                 - -c
