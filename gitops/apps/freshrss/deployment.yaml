@@ -84,6 +84,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+              add:
+                - CHOWN
           volumeMounts:
             - name: freshrss-config
               mountPath: /config
