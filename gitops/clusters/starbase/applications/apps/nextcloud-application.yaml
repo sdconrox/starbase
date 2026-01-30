@@ -66,8 +66,8 @@ spec:
             - name: php-conf-d
               mountPath: /usr/local/etc/php/conf.d
           extraInitContainers:
-            # Chown PVC to 1000:1000 so main container (UID 1000) can rsync into /var/www/html.
-            # Needed when the volume was previously written as root or NFS shows wrong ownership.
+            # Make PVC writable by UID 1000. chown can fail on NFS (Operation not permitted),
+            # so use chmod to ensure the main container can rsync into /var/www/html.
             - name: nextcloud-data-chown
               image: docker.io/library/busybox:1.36
               imagePullPolicy: IfNotPresent
@@ -81,7 +81,9 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - chown -R 1000:1000 /var/www/html
+                - |
+                  chown -R 1000:1000 /var/www/html 2>/dev/null || true
+                  chmod -R u+rwX,g+rwX,o+rX /var/www/html
             - name: php-conf-d-init
               image: docker.io/library/nextcloud:apache
               imagePullPolicy: IfNotPresent
