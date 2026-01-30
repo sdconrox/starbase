@@ -51,35 +51,47 @@ spec:
                   key: smtp-email
             - name: MAIL_DOMAIN
               value: apocalypso.xyz
-            # Force rsync to use --chown root:root instead of www-data:www-data
-            # root maps to k8s-nfs via NFS Mapall, so files end up owned correctly
-            - name: APACHE_RUN_USER
-              value: "#0"
-            - name: APACHE_RUN_GROUP
-              value: "#0"
-          # Run as root (image default) so Apache can bind port 80
+          # Shadow the NFS mount with emptyDir for app code; mount NFS only for persistent dirs
+          extraVolumes:
+            - name: app-code
+              emptyDir: {}
+          extraVolumeMounts:
+            # Shadow NFS with emptyDir - rsync writes here (local, fast, no permission issues)
+            - name: app-code
+              mountPath: /var/www/html
+            # Mount persistent directories from NFS PVC
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: data
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: config
+            - name: nextcloud-main
+              mountPath: /var/www/html/custom_apps
+              subPath: custom_apps
+            - name: nextcloud-main
+              mountPath: /var/www/html/themes
+              subPath: themes
           extraInitContainers:
-            # Prepare volume directories with correct ownership
-            - name: prepare-volume
+            # Prepare NFS directories
+            - name: prepare-nfs
               image: docker.io/library/busybox:1.36
               imagePullPolicy: IfNotPresent
               securityContext:
                 runAsUser: 0
               volumeMounts:
                 - name: nextcloud-main
-                  mountPath: /data
+                  mountPath: /nfs
               command:
                 - /bin/sh
                 - -c
                 - |
-                  echo "Preparing volume directories..."
-                  rm -rf /data/* /data/.[!.]* 2>/dev/null || true
-                  for dir in html root config custom_apps data themes tmp; do
-                    mkdir -p /data/$dir
-                    chmod 777 /data/$dir
-                    chown 1000:1000 /data/$dir 2>/dev/null || true
+                  echo "Preparing NFS directories..."
+                  for dir in data config custom_apps themes; do
+                    mkdir -p /nfs/$dir
+                    chmod 777 /nfs/$dir
                   done
-                  ls -la /data/
+                  ls -la /nfs/
         internalDatabase:
           enabled: false
         externalDatabase:

@@ -26,14 +26,22 @@ SMTP is configured via env vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_NAME`, `SMTP_PA
 
 ## NFS with Mapall
 
-The NFS share uses **Mapall User/Group = k8s-nfs**, so all client operations map to `k8s-nfs` on the server regardless of the UID inside the container. This means:
+The NFS share uses **Mapall User/Group = k8s-nfs**, which causes `rsync --chown` to fail. To work around this, we use a **split volume strategy**:
 
-- Nextcloud runs as **root** (the image default) - NFS sees writes as `k8s-nfs`
-- PostgreSQL runs as **UID 1000** - NFS sees writes as `k8s-nfs`
-- Both work because they're the same user on the server side
+1. **App code** (`/var/www/html`): Mounted as `emptyDir` (local to each pod)
+   - The Nextcloud entrypoint's rsync writes here with no NFS permission issues
+   - Each pod initializes independently on startup (fast, local storage)
 
-**Note:** `chown` and `chmod` will fail with "Operation not permitted" on this NFS - that's expected with Mapall. Nextcloud runs as root (no securityContext override) so it can write to the container filesystem (e.g. PHP config) and rsync into the NFS volume.
+2. **Persistent data** (from NFS PVC with subPaths):
+   - `/var/www/html/data` → user files
+   - `/var/www/html/config` → config.php
+   - `/var/www/html/custom_apps` → installed apps
+   - `/var/www/html/themes` → custom themes
 
-## Cron job and startup order
+This means the app code is NOT shared across pods (each runs from its own copy), but all persistent data IS shared via NFS. This is the recommended pattern for Nextcloud HA.
 
-The CronJob mounts the same PVC as the main app. The PVC only contains the app (including `cron.php`) after the main Nextcloud pods start and the entrypoint completes its rsync. On first deploy, the cron may fail until the main app is up. Once the main app has run successfully, the cron will find `cron.php` and work.
+PostgreSQL and Redis use NFS directly with UID 1000, which maps to `k8s-nfs` on the server.
+
+## Cron job
+
+The CronJob mounts the same volumes as the main app. Since app code is in an emptyDir, the cronjob also runs its own rsync on startup. This adds a few seconds of initialization overhead but ensures `cron.php` is always available.
