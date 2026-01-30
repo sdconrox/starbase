@@ -51,53 +51,15 @@ spec:
                   key: smtp-email
             - name: MAIL_DOMAIN
               value: apocalypso.xyz
-          # Run as UID 1000 so rsync doesn't use --chown (which causes www-data ownership).
-          # Init container handles PHP config and volume prep.
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          podSecurityContext:
-            fsGroup: 1000
-          extraVolumes:
-            - name: php-conf-d
-              emptyDir: {}
-          extraVolumeMounts:
-            - name: php-conf-d
-              mountPath: /usr/local/etc/php/conf.d
+            # Force rsync to use --chown root:root instead of www-data:www-data
+            # root maps to k8s-nfs via NFS Mapall, so files end up owned correctly
+            - name: APACHE_RUN_USER
+              value: "#0"
+            - name: APACHE_RUN_GROUP
+              value: "#0"
+          # Run as root (image default) so Apache can bind port 80
           extraInitContainers:
-            # Copy PHP config and create Redis session config (requires root for source dir)
-            - name: php-config-init
-              image: docker.io/library/nextcloud:apache
-              imagePullPolicy: IfNotPresent
-              securityContext:
-                runAsUser: 0
-              env:
-                - name: REDIS_HOST
-                  value: nextcloud-redis-master
-                - name: REDIS_HOST_PORT
-                  value: "6379"
-                - name: REDIS_HOST_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: nextcloud-secrets
-                      key: redis-password
-              volumeMounts:
-                - name: php-conf-d
-                  mountPath: /php-conf-d
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  cp -a /usr/local/etc/php/conf.d/. /php-conf-d/
-                  cat > /php-conf-d/redis-session.ini << EOF
-                  session.save_handler = redis
-                  session.save_path = "tcp://${REDIS_HOST}:${REDIS_HOST_PORT:-6379}?auth=${REDIS_HOST_PASSWORD}"
-                  redis.session.locking_enabled = 1
-                  redis.session.lock_retries = -1
-                  redis.session.lock_wait_time = 10000
-                  EOF
-                  chown -R 1000:1000 /php-conf-d
-            # Prepare volume directories
+            # Prepare volume directories with correct ownership
             - name: prepare-volume
               image: docker.io/library/busybox:1.36
               imagePullPolicy: IfNotPresent
@@ -212,9 +174,6 @@ spec:
           type: cronjob
           cronjob:
             schedule: "*/5 * * * *"
-            securityContext:
-              runAsUser: 1000
-              runAsGroup: 1000
         strategy:
           type: RollingUpdate
           rollingUpdate:
