@@ -53,6 +53,30 @@ spec:
               value: apocalypso.xyz
           # Run as image default (root). With NFS Mapall, all writes map to k8s-nfs regardless of UID.
           # No securityContext override needed - let the image run as designed.
+          extraInitContainers:
+            # Prepare volume directories with wide-open permissions.
+            # The chart mounts subPaths (html, config, etc.) - we create them with 777
+            # so any UID can write regardless of NFS Mapall weirdness.
+            - name: prepare-volume
+              image: docker.io/library/busybox:1.36
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsUser: 0
+              volumeMounts:
+                - name: nextcloud-main
+                  mountPath: /data
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Preparing volume directories..."
+                  rm -rf /data/* /data/.[!.]* 2>/dev/null || true
+                  for dir in html root config custom_apps data themes tmp; do
+                    mkdir -p /data/$dir
+                    chmod 777 /data/$dir
+                  done
+                  echo "Done. Directory contents:"
+                  ls -la /data/
         internalDatabase:
           enabled: false
         externalDatabase:
