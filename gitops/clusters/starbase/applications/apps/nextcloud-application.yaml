@@ -51,11 +51,54 @@ spec:
                   key: smtp-email
             - name: MAIL_DOMAIN
               value: apocalypso.xyz
-          # Leave securityContext empty so the image runs as root; entrypoint writes
-          # /usr/local/etc/php/conf.d/*. NFS Mapall still maps all writes to k8s-nfs.
-          securityContext: {}
+          # Run as 1000 (matches NFS Mapall k8s-nfs). Redis PHP config is created by init container
+          # so the image entrypoint does not need root to write /usr/local/etc/php/conf.d/redis-session.ini.
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
           podSecurityContext:
             fsGroup: 1000
+          extraVolumes:
+            - name: php-conf-d
+              emptyDir: {}
+          extraVolumeMounts:
+            - name: php-conf-d
+              mountPath: /usr/local/etc/php/conf.d
+          extraInitContainers:
+            - name: php-conf-d-init
+              image: docker.io/library/nextcloud:apache
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsUser: 0
+                runAsGroup: 0
+                runAsNonRoot: false
+              env:
+                - name: REDIS_HOST
+                  value: nextcloud-redis-master
+                - name: REDIS_HOST_PORT
+                  value: "6379"
+                - name: REDIS_HOST_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: nextcloud-secrets
+                      key: redis-password
+              volumeMounts:
+                - name: php-conf-d
+                  mountPath: /php-conf-d
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  cp -a /usr/local/etc/php/conf.d/. /php-conf-d/ 2>/dev/null || true
+                  printf '%s\n' \
+                    'session.save_handler = redis' \
+                    "session.save_path = \"tcp://${REDIS_HOST}:${REDIS_HOST_PORT:-6379}?auth=${REDIS_HOST_PASSWORD}\"" \
+                    'redis.session.locking_enabled = 1' \
+                    'redis.session.lock_retries = -1' \
+                    'redis.session.lock_wait_time = 10000' \
+                    > /php-conf-d/redis-session.ini
+                  chown -R 1000:1000 /php-conf-d
         internalDatabase:
           enabled: false
         externalDatabase:
