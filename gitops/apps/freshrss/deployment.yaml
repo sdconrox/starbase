@@ -42,19 +42,19 @@ spec:
       serviceAccountName: freshrss
       containers:
         - name: freshrss
-          image: lscr.io/linuxserver/freshrss:latest
+          image: freshrss/freshrss:latest
           imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 80
               protocol: TCP
           env:
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
             - name: TZ
               value: America/New_York
+            - name: CRON_MIN
+              value: "13,43"
+            - name: TRUSTED_PROXY
+              value: "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16"
           resources:
             requests:
               memory: "256Mi"
@@ -84,15 +84,17 @@ spec:
             capabilities:
               drop:
                 - ALL
-              add:
-                - CHOWN
           volumeMounts:
-            - name: freshrss-config
-              mountPath: /config
+            - name: freshrss-data
+              mountPath: /var/www/FreshRSS/data
+            - name: freshrss-extensions
+              mountPath: /var/www/FreshRSS/extensions
       volumes:
-        - name: freshrss-config
+        - name: freshrss-data
           persistentVolumeClaim:
             claimName: freshrss-data
+        - name: freshrss-extensions
+          emptyDir: {}
       securityContext:
         seccompProfile:
           type: RuntimeDefault
