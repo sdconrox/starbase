@@ -51,15 +51,11 @@ spec:
                   key: smtp-email
             - name: MAIL_DOMAIN
               value: apocalypso.xyz
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
+          # Leave securityContext empty so the image runs as root; entrypoint writes
+          # /usr/local/etc/php/conf.d/*. NFS Mapall still maps all writes to k8s-nfs.
+          securityContext: {}
           podSecurityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
             fsGroup: 1000
-            runAsNonRoot: true
         internalDatabase:
           enabled: false
         externalDatabase:
