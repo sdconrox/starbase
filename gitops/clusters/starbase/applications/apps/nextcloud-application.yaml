@@ -66,6 +66,22 @@ spec:
             - name: php-conf-d
               mountPath: /usr/local/etc/php/conf.d
           extraInitContainers:
+            # Chown PVC to 1000:1000 so main container (UID 1000) can rsync into /var/www/html.
+            # Needed when the volume was previously written as root or NFS shows wrong ownership.
+            - name: nextcloud-data-chown
+              image: docker.io/library/busybox:1.36
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsUser: 0
+                runAsGroup: 0
+                runAsNonRoot: false
+              volumeMounts:
+                - name: nextcloud-main
+                  mountPath: /var/www/html
+              command:
+                - /bin/sh
+                - -c
+                - chown -R 1000:1000 /var/www/html
             - name: php-conf-d-init
               image: docker.io/library/nextcloud:apache
               imagePullPolicy: IfNotPresent
