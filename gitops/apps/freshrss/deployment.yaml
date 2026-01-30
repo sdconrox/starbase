@@ -42,21 +42,19 @@ spec:
       serviceAccountName: freshrss
       containers:
         - name: freshrss
-          image: freshrss/freshrss:latest
+          image: lscr.io/linuxserver/freshrss:latest
           imagePullPolicy: Always
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: 80
               protocol: TCP
           env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
             - name: TZ
               value: America/New_York
-            - name: CRON_MIN
-              value: "13,43"
-            - name: TRUSTED_PROXY
-              value: "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16"
-            - name: LISTEN
-              value: "0.0.0.0:8080"
           resources:
             requests:
               memory: "256Mi"
@@ -67,7 +65,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: 80
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -75,7 +73,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: 80
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 3
@@ -90,16 +88,12 @@ spec:
               drop:
                 - ALL
           volumeMounts:
-            - name: freshrss-data
-              mountPath: /var/www/FreshRSS/data
-            - name: freshrss-extensions
-              mountPath: /var/www/FreshRSS/extensions
+            - name: freshrss-config
+              mountPath: /config
       volumes:
-        - name: freshrss-data
+        - name: freshrss-config
           persistentVolumeClaim:
             claimName: freshrss-data
-        - name: freshrss-extensions
-          emptyDir: {}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: Always
@@ -117,7 +111,7 @@ spec:
   type: ClusterIP
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 80
       protocol: TCP
       name: http
   selector:
