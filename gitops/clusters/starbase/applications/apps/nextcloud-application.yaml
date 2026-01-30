@@ -69,6 +69,11 @@ spec:
           # Match paperless/mealie/joplin: run as 1000 so NFS Mapall (k8s-nfs) ownership matches
           volumePermissions:
             enabled: true
+            # Bitnami os-shell tag pinned by subchart may not exist; use busybox for chown/mkdir/chmod
+            image:
+              registry: docker.io
+              repository: library/busybox
+              tag: "1.36"
           auth:
             existingSecret: nextcloud-secrets
             secretKeys:
