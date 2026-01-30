@@ -30,3 +30,4 @@ resources:
   - apps/mealie-application.yaml
   - apps/karakeep-application.yaml
   - apps/paperless-ngx-application.yaml
+  - apps/nextcloud-application.yaml

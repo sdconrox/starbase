@@ -1,0 +1,219 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nextcloud
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://nextcloud.github.io/helm/
+    chart: nextcloud
+    targetRevision: "8.9.0"
+    helm:
+      values: |
+        global:
+          security:
+            allowInsecureImages: true
+        replicaCount: 3
+        nextcloud:
+          host: nextcloud.apocalypso.xyz
+          existingSecret:
+            enabled: true
+            secretName: nextcloud-secrets
+            usernameKey: username
+            passwordKey: password
+          trustedDomains:
+            - nextcloud.apocalypso.xyz
+          # SMTP via Mailgun (env vars per https://github.com/nextcloud/docker#e-mail-smtp-configuration)
+          extraEnv:
+            - name: SMTP_HOST
+              value: smtp.mailgun.org
+            - name: SMTP_SECURE
+              value: tls
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_AUTHTYPE
+              value: LOGIN
+            - name: SMTP_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-email
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-password
+            - name: MAIL_FROM_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-mailgun
+                  key: smtp-email
+            - name: MAIL_DOMAIN
+              value: apocalypso.xyz
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+          podSecurityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            runAsNonRoot: true
+        internalDatabase:
+          enabled: false
+        externalDatabase:
+          enabled: false
+        postgresql:
+          enabled: true
+          auth:
+            existingSecret: nextcloud-secrets
+            secretKeys:
+              userPasswordKey: db-password
+              adminPasswordKey: db-super-password
+              replicationPasswordKey: db-replication-password
+          architecture: replication
+          primary:
+            persistence:
+              enabled: true
+              size: 50Gi
+              storageClass: nfs-csi
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "2000m"
+              limits:
+                memory: "8Gi"
+                cpu: "8000m"
+          readReplicas:
+            replicaCount: 2
+            persistence:
+              enabled: true
+              size: 50Gi
+              storageClass: nfs-csi
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+        redis:
+          enabled: true
+          auth:
+            existingSecret: nextcloud-secrets
+            existingSecretPasswordKey: redis-password
+          architecture: replication
+          sentinel:
+            enabled: false
+          master:
+            persistence:
+              enabled: true
+              size: 8Gi
+              storageClass: nfs-csi
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "1000m"
+              limits:
+                memory: "2Gi"
+                cpu: "2000m"
+          replica:
+            replicaCount: 3
+            persistence:
+              enabled: true
+              size: 8Gi
+              storageClass: nfs-csi
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+        cronjob:
+          enabled: true
+          type: cronjob
+          cronjob:
+            schedule: "*/5 * * * *"
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
+        strategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxSurge: 1
+            maxUnavailable: 0
+        persistence:
+          enabled: true
+          size: 8Ti
+          storageClassName: nfs-csi
+          accessMode: ReadWriteMany
+        ingress:
+          enabled: true
+          className: nginx
+          hosts:
+            - nextcloud.apocalypso.xyz
+          path: /
+          pathType: Prefix
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            nginx.ingress.kubernetes.io/proxy-body-size: "10G"
+            nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+            nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+            external-dns.alpha.kubernetes.io/controller: "false"
+            gethomepage.dev/enabled: "true"
+            gethomepage.dev/group: User Services
+            gethomepage.dev/name: Nextcloud
+            gethomepage.dev/icon: nextcloud
+            gethomepage.dev/description: File sync and share
+          tls:
+            - secretName: nextcloud-tls
+              hosts:
+                - nextcloud.apocalypso.xyz
+        phpClientHttpsFix:
+          enabled: true
+          protocol: https
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "2000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: nextcloud
+        service:
+          sessionAffinity: ""
+        extraManifests:
+          - |
+            apiVersion: onepassword.com/v1
+            kind: OnePasswordItem
+            metadata:
+              name: nextcloud-secrets
+              namespace: nextcloud
+            spec:
+              itemPath: "vaults/starbase/items/nextcloud"
+          - |
+            apiVersion: onepassword.com/v1
+            kind: OnePasswordItem
+            metadata:
+              name: smtp-mailgun
+              namespace: nextcloud
+            spec:
+              itemPath: "vaults/starbase/items/mailgun"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nextcloud
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
